@@ -11,15 +11,18 @@ import { buildLlmPrompt } from './lib/prompt'
 import { inputToParams, paramsToInput, shareUrl } from './lib/share'
 import { useStore } from './state'
 
-function useCopy(): [string | null, (text: string, label: string) => void] {
+function useCopy(): [string | null, string | null, (text: string, label: string, toast: string) => void] {
   const [copied, setCopied] = useState<string | null>(null)
-  const copy = (text: string, label: string) => {
+  const [toast, setToast] = useState<string | null>(null)
+  const copy = (text: string, label: string, toastMsg: string) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(label)
+      setToast(toastMsg)
       setTimeout(() => setCopied(null), 2000)
+      setTimeout(() => setToast(null), 8000)
     })
   }
-  return [copied, copy]
+  return [copied, toast, copy]
 }
 
 export default function App() {
@@ -28,7 +31,7 @@ export default function App() {
   const selectedYear = useStore((s) => s.selectedYear)
   const selectedMonth = useStore((s) => s.selectedMonth)
   const [showForm, setShowForm] = useState(false)
-  const [copied, copy] = useCopy()
+  const [copied, toast, copy] = useCopy()
 
   // 開站時從網址讀取分享的命盤參數
   useEffect(() => {
@@ -84,11 +87,19 @@ export default function App() {
         <h1>紫微斗數排盤</h1>
         {chart && input && (
           <div className="header-actions">
-            <button className="secondary" onClick={() => copy(shareUrl(input), 'share')}>
-              {copied === 'share' ? '已複製連結 ✓' : '分享'}
+            <button
+              className="secondary"
+              title="複製這張命盤的專屬連結，傳給對方打開就是同一張盤"
+              onClick={() => copy(shareUrl(input), 'share', '已複製命盤連結 ✓ 用 LINE 或訊息傳給對方，打開就是這張盤（生日資料只在連結裡，不經任何伺服器）。')}
+            >
+              {copied === 'share' ? '已複製 ✓' : '分享'}
             </button>
-            <button className="secondary" onClick={() => copy(buildLlmPrompt(chart, input, yearly), 'ai')}>
-              {copied === 'ai' ? '已複製，貼給 AI ✓' : 'AI 解讀'}
+            <button
+              className="secondary"
+              title="複製整張命盤的結構化資料，貼到 ChatGPT／Claude 等 AI 取得整盤綜合解讀"
+              onClick={() => copy(buildLlmPrompt(chart, input, yearly, monthly), 'ai', '已複製整張命盤資料 ✓ 接著開啟 ChatGPT、Claude 或任何 AI，直接「貼上→送出」，就會得到這張盤的綜合解讀。')}
+            >
+              {copied === 'ai' ? '已複製 ✓' : 'AI 解讀'}
             </button>
             <button className="secondary" onClick={() => setShowForm((v) => !v)}>
               {showForm ? '收起' : '重新排盤'}
@@ -96,6 +107,8 @@ export default function App() {
           </div>
         )}
       </header>
+
+      {toast && <p className="copy-toast">{toast}</p>}
 
       <SavedCharts />
 
@@ -118,6 +131,14 @@ export default function App() {
             {yearly && <YearBar yearly={yearly} birthYear={birthYear} />}
             {yearly && <MonthBar monthly={monthly} />}
             <ChartGrid chart={chart} name={input!.name} yearly={yearly} monthly={monthly} />
+            <div className="chart-legend">
+              <span><b className="mutagen mut-lu">祿</b> 生年四化</span>
+              <span><b className="mutagen flow mut-ji">忌</b> 流年／流月四化</span>
+              <span><em className="yearly-tag yearly-soul">年命</em> 流年命宮</span>
+              <span><em className="yearly-tag monthly-soul">月命</em> 流月命宮</span>
+              <span><em className="body-badge">身</em> 身宮</span>
+              <span>虛線框＝所選宮位的三方四正</span>
+            </div>
           </div>
           <div className="side-col">
             <PatternCard patterns={patterns} />

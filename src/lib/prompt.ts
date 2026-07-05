@@ -1,10 +1,15 @@
 import type FunctionalAstrolabe from 'iztro/lib/astro/FunctionalAstrolabe'
-import type { BirthInput, YearlyInfo } from './chart'
+import { LUNAR_MONTH_NAMES, type BirthInput, type MonthlyInfo, type YearlyInfo } from './chart'
 
 const MUTAGEN_ORDER = ['祿', '權', '科', '忌']
 
 // 把整張命盤組成結構化文字＋解讀指令，讓使用者貼到任何 LLM 取得綜合解讀。
-export function buildLlmPrompt(chart: FunctionalAstrolabe, input: BirthInput, yearly: YearlyInfo | null): string {
+export function buildLlmPrompt(
+  chart: FunctionalAstrolabe,
+  input: BirthInput,
+  yearly: YearlyInfo | null,
+  monthly: MonthlyInfo | null = null,
+): string {
   const lines: string[] = []
   lines.push('你是一位資深紫微斗數老師。以下是一張完整命盤資料，請給出綜合解讀。')
   lines.push('')
@@ -36,6 +41,11 @@ export function buildLlmPrompt(chart: FunctionalAstrolabe, input: BirthInput, ye
     lines.push(`【${yearly.year} ${yearly.stem}${yearly.branch}年 流年】`)
     lines.push(`虛歲 ${yearly.nominalAge}，行${decadalPalace.name}大限（${decadalPalace.decadal.range[0]}–${decadalPalace.decadal.range[1]} 歲），流年命宮在本命${soulPalace.name}（${soulPalace.earthlyBranch}宮）`)
     lines.push(`流年四化：${yearly.mutagenStars.map((s, i) => `${s}化${MUTAGEN_ORDER[i]}`).join('、')}`)
+    if (monthly) {
+      lines.push(
+        `${LUNAR_MONTH_NAMES[monthly.month - 1]}（${monthly.stem}${monthly.branch}月）流月：流月命宮在本命${chart.palaces[monthly.soulPalaceIndex].name}，流月四化 ${monthly.mutagenStars.map((s, i) => `${s}化${MUTAGEN_ORDER[i]}`).join('、')}`,
+      )
+    }
   }
   lines.push('')
   lines.push('【解讀要求】')

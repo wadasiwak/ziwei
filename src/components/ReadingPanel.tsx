@@ -4,7 +4,7 @@ import { auxStarNote } from '../content/auxStars'
 import { mutagenNote } from '../content/mutagens'
 import { findReading } from '../content/starInPalace'
 import { findPairReading } from '../content/starPairs'
-import { starOverview } from '../content/stars'
+import { brightnessNote, starOverview } from '../content/stars'
 import { useStore } from '../state'
 
 function oppositePalace(chart: FunctionalAstrolabe, palace: IFunctionalPalace): IFunctionalPalace {
@@ -63,7 +63,11 @@ export default function ReadingPanel({ chart }: { chart: FunctionalAstrolabe }) 
           <section key={star.name} className="reading-entry">
             <h4>
               {star.name}
-              {star.brightness ? <i className="brightness">（{star.brightness}）</i> : null}
+              {star.brightness ? (
+                <i className="brightness" title={brightnessNote[star.brightness] ?? ''}>
+                  （{star.brightness}{brightnessNote[star.brightness] ? `・${brightnessNote[star.brightness].split('，')[0]}` : ''}）
+                </i>
+              ) : null}
               {entry ? <span className="reading-title">{entry.title}</span> : null}
             </h4>
             <p className="star-overview">{starOverview[star.name]}</p>

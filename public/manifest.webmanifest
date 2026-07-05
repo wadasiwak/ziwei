@@ -1,0 +1,13 @@
+{
+  "name": "紫微斗數排盤",
+  "short_name": "紫微排盤",
+  "description": "輸入出生年月日時，排出紫微斗數十二宮命盤與白話解讀",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#14121c",
+  "theme_color": "#14121c",
+  "icons": [
+    { "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}

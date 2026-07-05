@@ -1,5 +1,6 @@
 import type { IFunctionalPalace } from 'iztro/lib/astro/FunctionalPalace'
 import type FunctionalStar from 'iztro/lib/star/FunctionalStar'
+import { brightnessNote } from '../content/stars'
 
 const MUTAGEN_CLASS: Record<string, string> = { 祿: 'mut-lu', 權: 'mut-quan', 科: 'mut-ke', 忌: 'mut-ji' }
 
@@ -7,7 +8,9 @@ function Star({ star, kind, yearlyMutagen }: { star: FunctionalStar; kind: 'majo
   return (
     <span className={`star star-${kind}`}>
       {star.name}
-      {star.brightness ? <i className="brightness">{star.brightness}</i> : null}
+      {star.brightness ? (
+        <i className="brightness" title={`${star.brightness}：${brightnessNote[star.brightness] ?? ''}`}>{star.brightness}</i>
+      ) : null}
       {star.mutagen ? <b className={`mutagen ${MUTAGEN_CLASS[star.mutagen] ?? ''}`}>{star.mutagen}</b> : null}
       {yearlyMutagen ? <b className={`mutagen flow ${MUTAGEN_CLASS[yearlyMutagen] ?? ''}`}>{yearlyMutagen}</b> : null}
     </span>

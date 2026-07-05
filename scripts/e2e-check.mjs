@@ -84,7 +84,7 @@ try {
   await page.click('.year-bar button:first-child') // 前一年
   const yearAfter = await page.textContent('.year-bar .year-label')
   if (yearBefore === yearAfter) fail('切換年份後年份列應更新')
-  const soulTags = await page.$$('.yearly-tag.yearly-soul')
+  const soulTags = await page.$$('.chart-grid .yearly-tag.yearly-soul')
   if (soulTags.length !== 1) fail(`盤面應恰有一個流年命宮標記，實得 ${soulTags.length}`)
 
   // 7. 三方四正：點命宮後應有 3 個虛線框宮位
@@ -107,7 +107,7 @@ try {
 
   // 10. 流月：點三月 → 盤面出現月命標記、面板出現流月區塊
   await page.click('.month-bar button:nth-of-type(3)')
-  await page.waitForSelector('.yearly-tag.monthly-soul', { timeout: 3000 })
+  await page.waitForSelector('.chart-grid .yearly-tag.monthly-soul', { timeout: 3000 })
   const monthlyBlock = await page.textContent('.monthly-block')
   if (!monthlyBlock.includes('流月命宮在本命')) fail('流月區塊應顯示流月命宮')
 
@@ -122,10 +122,17 @@ try {
   if (!center2.includes('木三局')) fail('分享連結開啟應還原同一張盤')
   await page2.close()
 
-  // 12. AI 解讀 prompt：複製內容應含盤面資料與解讀指令
+  // 12. AI 解讀 prompt：複製內容應含盤面資料與解讀指令，並跳出使用說明 toast
   await page.click('.header-actions button:nth-of-type(2)')
   const prompt = await page.evaluate(() => navigator.clipboard.readText())
   if (!prompt.includes('十二宮') || !prompt.includes('解讀要求')) fail('AI prompt 應含盤面資料與指令')
+  if (!prompt.includes('流月四化')) fail('選了流月時 AI prompt 應含流月資料')
+  const toast = await page.textContent('.copy-toast')
+  if (!toast.includes('貼上')) fail('AI 解讀按下後應顯示使用說明 toast')
+
+  // 13. 盤面圖例
+  const legend = await page.textContent('.chart-legend')
+  if (!legend.includes('生年四化') || !legend.includes('三方四正')) fail('盤面下方應有圖例')
 
   await browser.close()
   console.log('e2e OK：排盤、解讀、存取、流年流月、三方四正、雙星、格局、分享、AI prompt 全部通過')
