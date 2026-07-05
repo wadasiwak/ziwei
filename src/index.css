@@ -1,0 +1,430 @@
+:root {
+  --bg: #14121c;
+  --panel: #1e1b2a;
+  --cell: #201d2e;
+  --cell-hover: #2a2640;
+  --border: #3a3552;
+  --text: #d8d4e8;
+  --text-dim: #8f89a8;
+  --accent: #c9a86a;
+  --accent-dim: #8a7448;
+  --soul: #e8c987;
+  --mut-lu: #4fd08a;
+  --mut-quan: #c79bff;
+  --mut-ke: #6ab8ff;
+  --mut-ji: #ff7a7a;
+  font-family: 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 16px 48px;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.app-header h1 {
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  margin: 8px 0;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  padding: 6px 14px;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1408;
+  font-weight: 700;
+  padding: 8px 24px;
+}
+
+button.secondary { color: var(--accent); }
+
+/* ---- 表單 ---- */
+.birth-form {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+.birth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.birth-form input[type='text'],
+.birth-form input:not([type]),
+.birth-form select {
+  font: inherit;
+  background: var(--cell);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  min-width: 72px;
+}
+
+.birth-form .time-label select { min-width: 200px; }
+
+.leap-label {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 6px !important;
+  padding-bottom: 8px;
+}
+
+.privacy-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.error { color: var(--mut-ji); }
+
+/* ---- 已存命盤 ---- */
+.saved-charts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.saved-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.saved-chip .chip-load {
+  border: none;
+  background: none;
+  padding: 5px 4px 5px 14px;
+}
+
+.saved-chip .chip-del {
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  padding: 5px 10px 5px 6px;
+}
+
+.chip-save {
+  border-radius: 999px;
+  border-style: dashed;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+/* ---- 星盤 ---- */
+.chart-area {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.chart-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, minmax(120px, auto));
+  grid-template-areas:
+    'b-si   b-wu    b-wei   b-shen'
+    'b-chen center  center  b-you'
+    'b-mao  center  center  b-xu'
+    'b-yin  b-chou  b-zi    b-hai';
+  gap: 4px;
+  background: var(--border);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.chart-grid > div { display: flex; }
+
+.chart-grid > div > .palace { height: 100%; }
+
+.palace {
+  width: 100%;
+  min-height: 120px;
+  border: none;
+  border-radius: 0;
+  background: var(--cell);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.palace:hover { background: var(--cell-hover); }
+
+.palace.selected {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  background: var(--cell-hover);
+}
+
+.palace.soul .palace-name { color: var(--soul); font-weight: 700; }
+
+.palace-stars { display: flex; flex-direction: column; gap: 2px; }
+
+.majors { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.star { white-space: nowrap; }
+
+.star-major { font-size: 15px; font-weight: 700; color: var(--text); }
+
+.star-minor { font-size: 12px; color: #b0a9c9; }
+
+.minors, .adjs { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.star-adj { font-size: 10px; color: var(--text-dim); }
+
+.empty-palace { font-size: 12px; color: var(--text-dim); }
+
+.brightness {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-left: 1px;
+}
+
+.mutagen {
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 0 3px;
+  margin-left: 2px;
+  color: #14121c;
+}
+
+.mut-lu { background: var(--mut-lu); }
+.mut-quan { background: var(--mut-quan); }
+.mut-ke { background: var(--mut-ke); }
+.mut-ji { background: var(--mut-ji); }
+
+.palace-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.palace-name { font-size: 13px; color: var(--accent); }
+
+.body-badge {
+  font-style: normal;
+  font-size: 10px;
+  color: #14121c;
+  background: var(--soul);
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-left: 4px;
+  vertical-align: 1px;
+}
+
+.palace-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.chart-center {
+  grid-area: center;
+  background: var(--panel);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.chart-center h2 {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+.chart-center dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+  font-size: 12px;
+}
+
+.chart-center dl > div { display: flex; gap: 6px; }
+
+.chart-center dt { color: var(--text-dim); flex-shrink: 0; }
+
+.chart-center dd { margin: 0; }
+
+.center-hint {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ---- 解讀面板 ---- */
+.reading-panel {
+  width: 380px;
+  flex-shrink: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+}
+
+.reading-panel header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.reading-panel h3 {
+  margin: 0;
+  color: var(--accent);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reading-branch {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+.reading-panel .close {
+  border: none;
+  background: none;
+  color: var(--text-dim);
+}
+
+.borrow-note {
+  font-size: 13px;
+  color: var(--soul);
+  background: rgba(232, 201, 135, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.reading-entry { margin-top: 14px; }
+
+.reading-entry h4 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reading-title { font-size: 13px; color: var(--accent); font-weight: 400; }
+
+.star-overview {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin: 0 0 6px;
+}
+
+.reading-entry p {
+  font-size: 14px;
+  line-height: 1.75;
+  margin: 6px 0;
+}
+
+.disclaimer {
+  margin-top: 16px;
+  font-size: 11px;
+  color: var(--text-dim);
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+/* ---- 手機 ---- */
+@media (max-width: 900px) {
+  .app { padding: 8px 8px 40px; }
+
+  .chart-area { flex-direction: column; }
+
+  .chart-grid {
+    grid-template-rows: repeat(4, minmax(96px, auto));
+    gap: 2px;
+  }
+
+  .palace { min-height: 96px; padding: 4px; }
+
+  .star-major { font-size: 12px; }
+  .star-minor { font-size: 10px; }
+  .star-adj { display: none; }
+  .brightness { display: none; }
+  .palace-name { font-size: 11px; }
+  .palace-meta { font-size: 9px; }
+
+  .chart-center { padding: 8px; }
+  .chart-center h2 { font-size: 14px; margin-bottom: 4px; }
+  .chart-center dl { grid-template-columns: 1fr; gap: 2px; font-size: 10px; }
+  .center-hint { display: none; }
+
+  .reading-panel {
+    width: 100%;
+    position: static;
+    max-height: none;
+  }
+}

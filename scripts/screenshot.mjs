@@ -1,0 +1,31 @@
+import { spawn } from 'node:child_process'
+import { chromium } from 'playwright'
+const server = spawn('npx', ['vite', 'preview', '--port', '5201', '--strictPort'], { cwd: process.cwd(), stdio: 'ignore' })
+try {
+  for (let i = 0; i < 30; i++) { try { await fetch('http://localhost:5201/'); break } catch { await new Promise(r => setTimeout(r, 300)) } }
+  const browser = await chromium.launch()
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
+  await page.goto('http://localhost:5201/')
+  await page.fill('.birth-form input', '測試')
+  await page.selectOption('.birth-form select >> nth=2', '2000')
+  await page.selectOption('.birth-form select >> nth=3', '8')
+  await page.selectOption('.birth-form select >> nth=4', '16')
+  await page.selectOption('.birth-form select >> nth=5', '2')
+  await page.click('button.primary')
+  await page.waitForSelector('.chart-grid')
+  await page.click('[data-palace="命宮"]')
+  await page.waitForSelector('.reading-panel')
+  await page.screenshot({ path: process.env.SHOT_DIR + '/desktop.png', fullPage: true })
+  const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } })
+  await mobile.goto('http://localhost:5201/')
+  await mobile.fill('.birth-form input', '測試')
+  await mobile.selectOption('.birth-form select >> nth=2', '2000')
+  await mobile.selectOption('.birth-form select >> nth=3', '8')
+  await mobile.selectOption('.birth-form select >> nth=4', '16')
+  await mobile.selectOption('.birth-form select >> nth=5', '2')
+  await mobile.click('button.primary')
+  await mobile.waitForSelector('.chart-grid')
+  await mobile.screenshot({ path: process.env.SHOT_DIR + '/mobile.png' })
+  await browser.close()
+  console.log('shots done')
+} finally { server.kill() }

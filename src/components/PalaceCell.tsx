@@ -1,0 +1,61 @@
+import type { IFunctionalPalace } from 'iztro/lib/astro/FunctionalPalace'
+import type FunctionalStar from 'iztro/lib/star/FunctionalStar'
+
+const MUTAGEN_CLASS: Record<string, string> = { 祿: 'mut-lu', 權: 'mut-quan', 科: 'mut-ke', 忌: 'mut-ji' }
+
+function Star({ star, kind }: { star: FunctionalStar; kind: 'major' | 'minor' | 'adj' }) {
+  return (
+    <span className={`star star-${kind}`}>
+      {star.name}
+      {star.brightness ? <i className="brightness">{star.brightness}</i> : null}
+      {star.mutagen ? <b className={`mutagen ${MUTAGEN_CLASS[star.mutagen] ?? ''}`}>{star.mutagen}</b> : null}
+    </span>
+  )
+}
+
+export default function PalaceCell({
+  palace,
+  selected,
+  onClick,
+}: {
+  palace: IFunctionalPalace
+  selected: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      className={`palace ${selected ? 'selected' : ''} ${palace.name === '命宮' ? 'soul' : ''}`}
+      onClick={onClick}
+      data-palace={palace.name}
+    >
+      <div className="palace-stars">
+        <div className="majors">
+          {palace.majorStars.map((s) => (
+            <Star key={s.name} star={s} kind="major" />
+          ))}
+          {palace.majorStars.length === 0 && <span className="empty-palace">空宮</span>}
+        </div>
+        <div className="minors">
+          {palace.minorStars.map((s) => (
+            <Star key={s.name} star={s} kind="minor" />
+          ))}
+        </div>
+        <div className="adjs">
+          {palace.adjectiveStars.map((s) => (
+            <span key={s.name} className="star star-adj">{s.name}</span>
+          ))}
+        </div>
+      </div>
+      <div className="palace-footer">
+        <span className="palace-name">
+          {palace.name}
+          {palace.isBodyPalace && <em className="body-badge">身</em>}
+        </span>
+        <span className="palace-meta">
+          <span className="decadal">{palace.decadal.range[0]}–{palace.decadal.range[1]}</span>
+          <span className="stem-branch">{palace.heavenlyStem}{palace.earthlyBranch}</span>
+        </span>
+      </div>
+    </button>
+  )
+}
