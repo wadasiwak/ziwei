@@ -57,3 +57,40 @@ if (yentries.length !== 48 || ybad) {
   process.exit(1)
 }
 console.log('OK: 48 yearly mutagen entries covered')
+
+// 雙星同宮 24 組（實際會同宮的組合固定就是這 24 種）
+const PAIRS = [
+  '紫微天府', '紫微貪狼', '紫微天相', '紫微七殺', '紫微破軍',
+  '天機太陰', '天機巨門', '天機天梁',
+  '太陽巨門', '太陽天梁', '太陽太陰',
+  '武曲天府', '武曲貪狼', '武曲天相', '武曲七殺', '武曲破軍',
+  '天同太陰', '天同巨門', '天同天梁',
+  '廉貞天府', '廉貞貪狼', '廉貞天相', '廉貞七殺', '廉貞破軍',
+]
+const psrc = readFileSync(new URL('../src/content/starPairs.ts', import.meta.url), 'utf8')
+const pentries = JSON.parse(
+  psrc
+    .slice(psrc.indexOf('= [') + 2, psrc.indexOf(']\n\nexport function') + 1)
+    .replace(/'/g, '"')
+    .replace(/(\w+):/g, '"$1":')
+    .replace(/,(\s*[}\]])/g, '$1'),
+)
+let pbad = 0
+const pseen = new Set(pentries.map((e) => e.stars.join('')))
+for (const pair of PAIRS) {
+  if (!pseen.has(pair)) {
+    console.error(`missing pair: ${pair}`)
+    pbad++
+  }
+}
+for (const e of pentries) {
+  if (!e.title || !e.text || e.text.length < 100) {
+    console.error(`bad pair entry: ${e.stars.join('')}`)
+    pbad++
+  }
+}
+if (pentries.length !== 24 || pbad) {
+  console.error(`FAIL pairs: ${pentries.length} entries, ${pbad} problems`)
+  process.exit(1)
+}
+console.log('OK: 24 star-pair entries covered')

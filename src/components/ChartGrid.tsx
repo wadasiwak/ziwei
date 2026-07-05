@@ -1,5 +1,5 @@
 import type FunctionalAstrolabe from 'iztro/lib/astro/FunctionalAstrolabe'
-import { YEARLY_SHORT, type YearlyInfo } from '../lib/chart'
+import { YEARLY_SHORT, type MonthlyInfo, type YearlyInfo } from '../lib/chart'
 import { useStore } from '../state'
 import PalaceCell from './PalaceCell'
 
@@ -17,10 +17,12 @@ export default function ChartGrid({
   chart,
   name,
   yearly,
+  monthly,
 }: {
   chart: FunctionalAstrolabe
   name: string
   yearly: YearlyInfo | null
+  monthly: MonthlyInfo | null
 }) {
   const selectedPalace = useStore((s) => s.selectedPalace)
   const selectPalace = useStore((s) => s.selectPalace)
@@ -31,6 +33,13 @@ export default function ChartGrid({
     return i >= 0 ? MUTAGEN_ORDER[i] : undefined
   }
 
+  // 三方四正：對宮(+6)與三合(+4、+8)
+  const selectedIndex = selectedPalace ? chart.palaces.find((p) => p.name === selectedPalace)?.index : undefined
+  const relatedIndexes =
+    selectedIndex !== undefined
+      ? new Set([(selectedIndex + 4) % 12, (selectedIndex + 6) % 12, (selectedIndex + 8) % 12])
+      : null
+
   return (
     <div className="chart-grid">
       {chart.palaces.map((p) => (
@@ -38,9 +47,11 @@ export default function ChartGrid({
           <PalaceCell
             palace={p}
             selected={selectedPalace === p.name}
+            related={relatedIndexes?.has(p.index) ?? false}
             onClick={() => selectPalace(selectedPalace === p.name ? null : p.name)}
             yearlyName={yearly ? YEARLY_SHORT[yearly.palaceNames[p.index]] ?? null : null}
             isYearlySoul={yearly?.soulPalaceIndex === p.index}
+            isMonthlySoul={monthly?.soulPalaceIndex === p.index}
             yearlyMutagenOf={yearlyMutagenOf}
           />
         </div>

@@ -21,7 +21,11 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  background:
+    radial-gradient(1200px 500px at 80% -10%, rgba(201, 168, 106, 0.06), transparent 60%),
+    radial-gradient(900px 500px at 0% 110%, rgba(107, 92, 165, 0.08), transparent 60%),
+    var(--bg);
+  min-height: 100vh;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
@@ -41,9 +45,33 @@ body {
 
 .app-header h1 {
   font-size: 20px;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   color: var(--accent);
   margin: 8px 0;
+}
+
+.app-header h1::before {
+  content: '✦ ';
+  font-size: 14px;
+  color: var(--accent-dim);
+}
+
+.hero {
+  text-align: center;
+  margin: 40px 0 8px;
+}
+
+.hero-title {
+  font-size: 22px;
+  letter-spacing: 1px;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+.hero-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0;
 }
 
 button {
@@ -315,6 +343,56 @@ button.secondary { color: var(--accent); }
   color: var(--text-dim);
 }
 
+/* ---- 格局卡片 ---- */
+.pattern-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.pattern-card h3 {
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-size: 15px;
+}
+
+.pattern-item { padding: 3px 0; }
+
+.pattern-item summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.pattern-item summary::after {
+  content: ' ▾';
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.pattern-item[open] summary::after { content: ' ▴'; }
+
+.pattern-badge {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--soul);
+  border: 1px solid var(--accent-dim);
+  border-radius: 999px;
+  padding: 1px 10px;
+}
+
+.pattern-item p {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 6px 0 4px;
+}
+
+.pair-entry {
+  background: rgba(201, 168, 106, 0.06);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
 /* ---- 側欄（流年總覽 + 解讀）---- */
 .chart-col {
   flex: 1;
@@ -334,6 +412,40 @@ button.secondary { color: var(--accent); }
   top: 12px;
   max-height: calc(100vh - 24px);
   overflow-y: auto;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---- 三方四正 ---- */
+.palace.related {
+  outline: 1.5px dashed var(--accent-dim);
+  outline-offset: -2px;
+}
+
+.trine-line {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  font-size: 13px !important;
+}
+
+.trine-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.trine-note {
+  font-size: 11px !important;
+  color: var(--text-dim);
 }
 
 /* ---- 年份選擇列 ---- */
@@ -356,6 +468,39 @@ button.secondary { color: var(--accent); }
 .year-bar .year-label b { color: var(--accent); }
 
 .year-bar .back-to-now { font-size: 12px; color: var(--accent); }
+
+/* ---- 流月選擇列 ---- */
+.month-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.month-bar-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-right: 4px;
+}
+
+.month-bar button {
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+.month-bar button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1408;
+  font-weight: 700;
+}
+
+.month-bar .month-info {
+  font-size: 12px;
+  color: var(--accent);
+  margin-left: 4px;
+}
 
 /* ---- 流年總覽 ---- */
 .yearly-panel {
@@ -408,6 +553,37 @@ button.secondary { color: var(--accent); }
   margin: 10px 0 0;
   font-size: 11px;
   color: var(--text-dim);
+}
+
+.monthly-block {
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.monthly-block h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: var(--accent);
+}
+
+.monthly-mutagens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.monthly-mutagens .mutagen { margin-right: 6px; }
+
+.yearly-tag.monthly-soul {
+  color: var(--mut-ke);
+  border-color: var(--mut-ke);
+  border-style: dashed;
+  font-weight: 700;
 }
 
 /* 流年四化：外框式色標，與本命四化（實心）區分 */
@@ -520,6 +696,16 @@ button.secondary { color: var(--accent); }
 /* ---- 手機 ---- */
 @media (max-width: 900px) {
   .app { padding: 8px 8px 40px; }
+
+  .app-header { flex-wrap: wrap; }
+
+  .app-header h1 {
+    white-space: nowrap;
+    font-size: 17px;
+    letter-spacing: 2px;
+  }
+
+  .header-actions button { padding: 4px 10px; font-size: 13px; }
 
   .chart-area { flex-direction: column; }
 

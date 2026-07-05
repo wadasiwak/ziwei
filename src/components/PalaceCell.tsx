@@ -17,23 +17,28 @@ function Star({ star, kind, yearlyMutagen }: { star: FunctionalStar; kind: 'majo
 export default function PalaceCell({
   palace,
   selected,
+  related,
   onClick,
   yearlyName,
   isYearlySoul,
+  isMonthlySoul,
   yearlyMutagenOf,
 }: {
   palace: IFunctionalPalace
   selected: boolean
+  /** 是否為選中宮位的三方四正 */
+  related: boolean
   onClick: () => void
   /** 該宮的流年宮名縮寫（如「年命」），null 表示不顯示流年層 */
   yearlyName: string | null
   isYearlySoul: boolean
+  isMonthlySoul: boolean
   /** 星名 → 流年四化（祿權科忌），無則 undefined */
   yearlyMutagenOf: (starName: string) => string | undefined
 }) {
   return (
     <button
-      className={`palace ${selected ? 'selected' : ''} ${palace.name === '命宮' ? 'soul' : ''}`}
+      className={`palace ${selected ? 'selected' : ''} ${related ? 'related' : ''} ${palace.name === '命宮' ? 'soul' : ''}`}
       onClick={onClick}
       data-palace={palace.name}
     >
@@ -60,6 +65,7 @@ export default function PalaceCell({
           {palace.name}
           {palace.isBodyPalace && <em className="body-badge">身</em>}
           {yearlyName && <em className={`yearly-tag ${isYearlySoul ? 'yearly-soul' : ''}`}>{yearlyName}</em>}
+          {isMonthlySoul && <em className="yearly-tag monthly-soul">月命</em>}
         </span>
         <span className="palace-meta">
           <span className="decadal">{palace.decadal.range[0]}–{palace.decadal.range[1]}</span>

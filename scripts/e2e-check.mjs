@@ -3,7 +3,7 @@
 import { spawn } from 'node:child_process'
 import { chromium } from 'playwright'
 
-const PORT = 5200
+const PORT = 5210
 const BASE_URL = `http://localhost:${PORT}/`
 
 const server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], {
@@ -30,7 +30,8 @@ try {
   }
 
   const browser = await chromium.launch()
-  const page = await browser.newPage()
+  const context = await browser.newContext({ permissions: ['clipboard-read', 'clipboard-write'] })
+  const page = await context.newPage()
   await page.goto(BASE_URL)
 
   // 1. 填表排盤（陽曆 2000-8-16 寅時 女 → 命宮在午、木三局）
@@ -86,8 +87,48 @@ try {
   const soulTags = await page.$$('.yearly-tag.yearly-soul')
   if (soulTags.length !== 1) fail(`盤面應恰有一個流年命宮標記，實得 ${soulTags.length}`)
 
+  // 7. 三方四正：點命宮後應有 3 個虛線框宮位
+  await page.click('[data-palace="命宮"]')
+  await page.waitForSelector('.reading-panel')
+  const related = await page.$$('.palace.related')
+  if (related.length !== 3) fail(`三方四正應標記 3 宮，實得 ${related.length}`)
+  const readingText = await page.textContent('.reading-panel')
+  if (!readingText.includes('三方四正會照')) fail('解讀面板應含三方四正區塊')
+
+  // 8. 雙星同宮：此盤官祿宮為廉貞天府，應顯示組合解讀
+  await page.click('[data-palace="官祿"]')
+  await page.waitForSelector('.pair-entry', { timeout: 3000 })
+  const pairText = await page.textContent('.pair-entry')
+  if (!pairText.includes('同宮')) fail('雙星組合區塊應顯示')
+
+  // 9. 格局卡片：此盤命宮三方有貪狼+鈴星（遷移），應偵測到鈴貪格
+  const patternText = await page.textContent('.pattern-card')
+  if (!patternText.includes('鈴貪格')) fail(`格局卡片應含鈴貪格，實得: ${patternText}`)
+
+  // 10. 流月：點三月 → 盤面出現月命標記、面板出現流月區塊
+  await page.click('.month-bar button:nth-of-type(3)')
+  await page.waitForSelector('.yearly-tag.monthly-soul', { timeout: 3000 })
+  const monthlyBlock = await page.textContent('.monthly-block')
+  if (!monthlyBlock.includes('流月命宮在本命')) fail('流月區塊應顯示流月命宮')
+
+  // 11. 分享連結：複製的網址帶生日參數，直接開啟能還原命盤
+  await page.click('.header-actions button:first-child')
+  const copied = await page.evaluate(() => navigator.clipboard.readText())
+  if (!copied.includes('d=2000-8-16')) fail(`分享連結應含生日參數，實得: ${copied}`)
+  const page2 = await context.newPage()
+  await page2.goto(copied)
+  await page2.waitForSelector('.chart-grid', { timeout: 5000 })
+  const center2 = await page2.textContent('.chart-center')
+  if (!center2.includes('木三局')) fail('分享連結開啟應還原同一張盤')
+  await page2.close()
+
+  // 12. AI 解讀 prompt：複製內容應含盤面資料與解讀指令
+  await page.click('.header-actions button:nth-of-type(2)')
+  const prompt = await page.evaluate(() => navigator.clipboard.readText())
+  if (!prompt.includes('十二宮') || !prompt.includes('解讀要求')) fail('AI prompt 應含盤面資料與指令')
+
   await browser.close()
-  console.log('e2e OK：排盤、解讀、存取命盤、空宮借對宮全部通過')
+  console.log('e2e OK：排盤、解讀、存取、流年流月、三方四正、雙星、格局、分享、AI prompt 全部通過')
 } finally {
   server.kill()
 }

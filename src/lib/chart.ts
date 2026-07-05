@@ -1,5 +1,6 @@
 import { astro } from 'iztro'
 import type FunctionalAstrolabe from 'iztro/lib/astro/FunctionalAstrolabe'
+import { lunar2solar } from 'lunar-lite'
 
 export type BirthInput = {
   name: string
@@ -48,6 +49,10 @@ export type YearlyInfo = {
   mutagenStars: string[]
   /** 該年所行大限在 palaces[] 的索引 */
   decadalIndex: number
+  decadalStem: string
+  decadalBranch: string
+  /** 大限四化星名，依 [祿, 權, 科, 忌] 順序 */
+  decadalMutagenStars: string[]
 }
 
 // 取盤主某西元年的流年資料。用 6/1 取值可穩定落在該農曆年內（避開年初分界）。
@@ -62,6 +67,38 @@ export function computeYearly(chart: FunctionalAstrolabe, year: number): YearlyI
     palaceNames: h.yearly.palaceNames,
     mutagenStars: h.yearly.mutagen,
     decadalIndex: h.decadal.index,
+    decadalStem: h.decadal.heavenlyStem,
+    decadalBranch: h.decadal.earthlyBranch,
+    decadalMutagenStars: h.decadal.mutagen,
+  }
+}
+
+export type MonthlyInfo = {
+  /** 農曆月 1–12 */
+  month: number
+  stem: string
+  branch: string
+  /** 流月命宮在 palaces[] 的索引 */
+  soulPalaceIndex: number
+  /** 十二流月宮名，對齊 palaces[] */
+  palaceNames: string[]
+  /** 流月四化星名，依 [祿, 權, 科, 忌] 順序 */
+  mutagenStars: string[]
+}
+
+export const LUNAR_MONTH_NAMES = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '冬月', '臘月']
+
+// 取某流年（西元年）農曆某月的流月資料。取該農曆月十五對應的國曆日期送 horoscope。
+export function computeMonthly(chart: FunctionalAstrolabe, year: number, lunarMonth: number): MonthlyInfo {
+  const solarDate = lunar2solar(`${year}-${lunarMonth}-15`, false).toString()
+  const h = chart.horoscope(solarDate)
+  return {
+    month: lunarMonth,
+    stem: h.monthly.heavenlyStem,
+    branch: h.monthly.earthlyBranch,
+    soulPalaceIndex: h.monthly.index,
+    palaceNames: h.monthly.palaceNames,
+    mutagenStars: h.monthly.mutagen,
   }
 }
 

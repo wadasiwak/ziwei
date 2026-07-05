@@ -6,10 +6,13 @@ type State = {
   input: BirthInput | null
   selectedPalace: string | null
   selectedYear: number
+  /** 農曆月 1–12，null 表示不看流月 */
+  selectedMonth: number | null
   saved: SavedChart[]
   setInput: (input: BirthInput) => void
   selectPalace: (name: string | null) => void
   setYear: (year: number) => void
+  setMonth: (month: number | null) => void
   saveCurrent: () => void
   loadSaved: (id: string) => void
   deleteSaved: (id: string) => void
@@ -19,11 +22,14 @@ export const useStore = create<State>((set, get) => ({
   input: null,
   selectedPalace: null,
   selectedYear: new Date().getFullYear(),
+  selectedMonth: null,
   saved: loadCharts(),
 
   setInput: (input) => set({ input, selectedPalace: null }),
 
   setYear: (year) => set({ selectedYear: year }),
+
+  setMonth: (month) => set({ selectedMonth: month }),
 
   selectPalace: (name) => set({ selectedPalace: name }),
 

@@ -1,11 +1,11 @@
 import { spawn } from 'node:child_process'
 import { chromium } from 'playwright'
-const server = spawn('npx', ['vite', 'preview', '--port', '5201', '--strictPort'], { cwd: process.cwd(), stdio: 'ignore' })
+const server = spawn('npx', ['vite', 'preview', '--port', '5211', '--strictPort'], { cwd: process.cwd(), stdio: 'ignore' })
 try {
-  for (let i = 0; i < 30; i++) { try { await fetch('http://localhost:5201/'); break } catch { await new Promise(r => setTimeout(r, 300)) } }
+  for (let i = 0; i < 30; i++) { try { await fetch('http://localhost:5211/'); break } catch { await new Promise(r => setTimeout(r, 300)) } }
   const browser = await chromium.launch()
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
-  await page.goto('http://localhost:5201/')
+  await page.goto('http://localhost:5211/')
   await page.fill('.birth-form input', '測試')
   await page.selectOption('.birth-form select >> nth=2', '2000')
   await page.selectOption('.birth-form select >> nth=3', '8')
@@ -15,9 +15,11 @@ try {
   await page.waitForSelector('.chart-grid')
   await page.click('[data-palace="命宮"]')
   await page.waitForSelector('.reading-panel')
+  await page.click('.month-bar button:nth-of-type(3)')
+  await page.waitForSelector('.yearly-tag.monthly-soul')
   await page.screenshot({ path: process.env.SHOT_DIR + '/desktop.png', fullPage: true })
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } })
-  await mobile.goto('http://localhost:5201/')
+  await mobile.goto('http://localhost:5211/')
   await mobile.fill('.birth-form input', '測試')
   await mobile.selectOption('.birth-form select >> nth=2', '2000')
   await mobile.selectOption('.birth-form select >> nth=3', '8')

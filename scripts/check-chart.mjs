@@ -119,8 +119,28 @@ verifyYearly(sample, 2026) // 丙午
 verifyYearly(sample, 2025) // 乙巳
 verifyYearly(sample, 2033) // 癸丑
 
-if (failures) {
-  console.error(`\n${failures} 項驗證失敗`)
-  process.exit(1)
-}
-console.log('\n全部通過：命身宮、五行局、主星分布、四化皆與古法一致')
+// ---- 流月驗證：月干支依五虎遁（年干定寅月干），月支正月起寅 ----
+import('lunar-lite').then(({ lunar2solar }) => {
+  console.log('\n[流月 五虎遁]')
+  // 五虎遁：甲己→丙寅、乙庚→戊寅、丙辛→庚寅、丁壬→壬寅、戊癸→甲寅
+  const TIGER = { 甲: '丙', 己: '丙', 乙: '戊', 庚: '戊', 丙: '庚', 辛: '庚', 丁: '壬', 壬: '壬', 戊: '甲', 癸: '甲' }
+  const year = 2026 // 丙年
+  for (const month of [1, 3, 12]) {
+    const solarDate = lunar2solar(`${year}-${month}-15`, false).toString()
+    const h = sample.horoscope(solarDate)
+    const firstStemIdx = STEMS.indexOf(TIGER[STEMS[(year - 4) % 10]])
+    const expectStem = STEMS[(firstStemIdx + month - 1) % 10]
+    const expectBranch = BRANCHES[(2 + month - 1) % 12]
+    assert(
+      h.monthly.heavenlyStem === expectStem && h.monthly.earthlyBranch === expectBranch,
+      `${year} 農曆${month}月 干支 ${h.monthly.heavenlyStem}${h.monthly.earthlyBranch} = ${expectStem}${expectBranch}`,
+    )
+    assert(h.monthly.palaceNames[h.monthly.index] === '命宮', `流月宮名對齊（index 處為命宮）`)
+  }
+  if (failures) {
+    console.error(`\n${failures} 項驗證失敗`)
+    process.exit(1)
+  }
+  console.log('\n全部通過：命身宮、五行局、主星分布、四化、流年、流月皆與古法一致')
+})
+
