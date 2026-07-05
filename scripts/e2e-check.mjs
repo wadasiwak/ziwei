@@ -134,6 +134,10 @@ try {
   const legend = await page.textContent('.chart-legend')
   if (!legend.includes('生年四化') || !legend.includes('三方四正')) fail('盤面下方應有圖例')
 
+  // 14. 隱私：analytics 回報路徑絕不可含生日參數（網址此時帶 ?d=...）
+  const gcPath = await page.evaluate(() => window.goatcounter.path())
+  if (gcPath.includes('d=') || gcPath.includes('?')) fail(`goatcounter path 不可含 query，實得: ${gcPath}`)
+
   await browser.close()
   console.log('e2e OK：排盤、解讀、存取、流年流月、三方四正、雙星、格局、分享、AI prompt 全部通過')
 } finally {

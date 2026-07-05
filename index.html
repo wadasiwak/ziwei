@@ -13,5 +13,15 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // 匿名流量統計（GoatCounter，無 cookie）。
+      // path 只回報路徑：分享連結的 query 帶生日參數，絕不能進 analytics。
+      window.goatcounter = {
+        path: function () {
+          return location.pathname
+        },
+      }
+    </script>
+    <script data-goatcounter="https://wadasiwak.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
   </body>
 </html>

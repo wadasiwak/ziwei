@@ -57,6 +57,14 @@ export default function App() {
     }
   }, [input])
 
+  // 匿名事件：記一次「有人排了盤」，不帶任何輸入資料
+  useEffect(() => {
+    const gc = (window as { goatcounter?: { count?: (opts: object) => void } }).goatcounter
+    if (chart && gc?.count) {
+      gc.count({ path: 'event/chart-created', title: '排盤', event: true })
+    }
+  }, [chart])
+
   const birthYear = chart ? Number(chart.solarDate.split('-')[0]) : 0
 
   const yearly = useMemo(() => {
