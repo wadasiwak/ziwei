@@ -34,3 +34,40 @@ export function computeChart(input: BirthInput): FunctionalAstrolabe {
   }
   return astro.byLunar(input.date, input.timeIndex, input.gender, input.isLeapMonth, true, 'zh-TW')
 }
+
+export type YearlyInfo = {
+  year: number
+  stem: string
+  branch: string
+  nominalAge: number
+  /** 流年命宮在 palaces[] 的索引 */
+  soulPalaceIndex: number
+  /** 十二流年宮名，對齊 palaces[] */
+  palaceNames: string[]
+  /** 流年四化星名，依 [祿, 權, 科, 忌] 順序 */
+  mutagenStars: string[]
+  /** 該年所行大限在 palaces[] 的索引 */
+  decadalIndex: number
+}
+
+// 取盤主某西元年的流年資料。用 6/1 取值可穩定落在該農曆年內（避開年初分界）。
+export function computeYearly(chart: FunctionalAstrolabe, year: number): YearlyInfo {
+  const h = chart.horoscope(`${year}-6-1`)
+  return {
+    year,
+    stem: h.yearly.heavenlyStem,
+    branch: h.yearly.earthlyBranch,
+    nominalAge: h.age.nominalAge,
+    soulPalaceIndex: h.yearly.index,
+    palaceNames: h.yearly.palaceNames,
+    mutagenStars: h.yearly.mutagen,
+    decadalIndex: h.decadal.index,
+  }
+}
+
+/** 盤面上顯示用的流年宮名縮寫 */
+export const YEARLY_SHORT: Record<string, string> = {
+  命宮: '年命', 兄弟: '年兄', 夫妻: '年夫', 子女: '年子',
+  財帛: '年財', 疾厄: '年疾', 遷移: '年遷', 僕役: '年友',
+  官祿: '年官', 田宅: '年田', 福德: '年福', 父母: '年父',
+}

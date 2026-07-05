@@ -315,18 +315,138 @@ button.secondary { color: var(--accent); }
   color: var(--text-dim);
 }
 
-/* ---- 解讀面板 ---- */
-.reading-panel {
+/* ---- 側欄（流年總覽 + 解讀）---- */
+.chart-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.side-col {
   width: 380px;
   flex-shrink: 0;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   position: sticky;
   top: 12px;
   max-height: calc(100vh - 24px);
   overflow-y: auto;
+}
+
+/* ---- 年份選擇列 ---- */
+.year-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.year-bar button {
+  padding: 2px 12px;
+  font-size: 15px;
+}
+
+.year-bar .year-label {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.year-bar .year-label b { color: var(--accent); }
+
+.year-bar .back-to-now { font-size: 12px; color: var(--accent); }
+
+/* ---- 流年總覽 ---- */
+.yearly-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.yearly-panel h3 { margin: 0; color: var(--accent); font-size: 16px; }
+
+.yearly-meta {
+  margin: 4px 0 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.yearly-soul-line {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0 0 10px;
+}
+
+.yearly-soul-line strong { color: var(--soul); }
+
+.yearly-mutagen {
+  border-top: 1px solid var(--border);
+  padding: 6px 0;
+}
+
+.yearly-mutagen summary {
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.yearly-mutagen .mutagen-title { color: var(--accent); font-size: 12px; }
+
+.yearly-mutagen p {
+  font-size: 13px;
+  line-height: 1.75;
+  margin: 6px 0 2px;
+  color: var(--text);
+}
+
+.yearly-hint {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* 流年四化：外框式色標，與本命四化（實心）區分 */
+.mutagen.flow {
+  background: transparent;
+  border: 1px solid;
+}
+
+.mutagen.flow.mut-lu { color: var(--mut-lu); border-color: var(--mut-lu); }
+.mutagen.flow.mut-quan { color: var(--mut-quan); border-color: var(--mut-quan); }
+.mutagen.flow.mut-ke { color: var(--mut-ke); border-color: var(--mut-ke); }
+.mutagen.flow.mut-ji { color: var(--mut-ji); border-color: var(--mut-ji); }
+
+/* 宮位角落的流年宮名 */
+.yearly-tag {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 3px;
+  margin-left: 4px;
+  vertical-align: 1px;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.yearly-tag.yearly-soul {
+  color: var(--soul);
+  border-color: var(--soul);
+  font-weight: 700;
+}
+
+/* ---- 解讀面板 ---- */
+.reading-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
 }
 
 .reading-panel header {
@@ -422,9 +542,12 @@ button.secondary { color: var(--accent); }
   .chart-center dl { grid-template-columns: 1fr; gap: 2px; font-size: 10px; }
   .center-hint { display: none; }
 
-  .reading-panel {
+  .side-col {
     width: 100%;
     position: static;
     max-height: none;
+    overflow: visible;
   }
+
+  .yearly-tag { margin-left: 2px; padding: 0 2px; font-size: 9px; }
 }

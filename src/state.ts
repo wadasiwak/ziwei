@@ -5,9 +5,11 @@ import { loadCharts, newId, saveCharts, type SavedChart } from './lib/storage'
 type State = {
   input: BirthInput | null
   selectedPalace: string | null
+  selectedYear: number
   saved: SavedChart[]
   setInput: (input: BirthInput) => void
   selectPalace: (name: string | null) => void
+  setYear: (year: number) => void
   saveCurrent: () => void
   loadSaved: (id: string) => void
   deleteSaved: (id: string) => void
@@ -16,9 +18,12 @@ type State = {
 export const useStore = create<State>((set, get) => ({
   input: null,
   selectedPalace: null,
+  selectedYear: new Date().getFullYear(),
   saved: loadCharts(),
 
   setInput: (input) => set({ input, selectedPalace: null }),
+
+  setYear: (year) => set({ selectedYear: year }),
 
   selectPalace: (name) => set({ selectedPalace: name }),
 

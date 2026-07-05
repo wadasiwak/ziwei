@@ -101,6 +101,24 @@ verify('閏月下半', astro.byLunar('2023-2-20', 6, '女', true, true, 'zh-TW')
 // 案例五：農曆閏月上半（閏二月初十 → 仍以二月論）
 verify('閏月上半', astro.byLunar('2023-2-10', 6, '女', true, true, 'zh-TW'), 6)
 
+// ---- 流年驗證：流年命宮 = 太歲地支所在宮位；流年四化 = 該年年干四化 ----
+function verifyYearly(chart, year) {
+  console.log(`\n[流年 ${year}]`)
+  const h = chart.horoscope(`${year}-6-1`)
+  // 西元年 → 干支（1984 甲子）
+  const stem = STEMS[(((year - 4) % 10) + 10) % 10]
+  const branch = BRANCHES[(((year - 4) % 12) + 12) % 12]
+  assert(h.yearly.heavenlyStem === stem && h.yearly.earthlyBranch === branch, `年干支 ${h.yearly.heavenlyStem}${h.yearly.earthlyBranch} = ${stem}${branch}`)
+  assert(chart.palaces[h.yearly.index].earthlyBranch === branch, `流年命宮在${branch}宮（palaces[${h.yearly.index}]）`)
+  assert(h.yearly.palaceNames[h.yearly.index] === '命宮', `流年宮名對齊（index 處為命宮）`)
+  assert(JSON.stringify(h.yearly.mutagen) === JSON.stringify(MUTAGEN_TABLE[stem]), `${stem}年流年四化 ${h.yearly.mutagen.join('、')}`)
+}
+
+const sample = astro.bySolar('2000-8-16', 2, '女', true, 'zh-TW')
+verifyYearly(sample, 2026) // 丙午
+verifyYearly(sample, 2025) // 乙巳
+verifyYearly(sample, 2033) // 癸丑
+
 if (failures) {
   console.error(`\n${failures} 項驗證失敗`)
   process.exit(1)

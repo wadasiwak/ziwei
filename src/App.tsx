@@ -3,11 +3,13 @@ import BirthForm from './components/BirthForm'
 import ChartGrid from './components/ChartGrid'
 import ReadingPanel from './components/ReadingPanel'
 import SavedCharts from './components/SavedCharts'
-import { computeChart } from './lib/chart'
+import YearlyPanel, { YearBar } from './components/YearlyPanel'
+import { computeChart, computeYearly } from './lib/chart'
 import { useStore } from './state'
 
 export default function App() {
   const input = useStore((s) => s.input)
+  const selectedYear = useStore((s) => s.selectedYear)
   const [showForm, setShowForm] = useState(false)
 
   const chart = useMemo(() => {
@@ -19,6 +21,18 @@ export default function App() {
       return null
     }
   }, [input])
+
+  const birthYear = chart ? Number(chart.solarDate.split('-')[0]) : 0
+
+  const yearly = useMemo(() => {
+    if (!chart) return null
+    try {
+      return computeYearly(chart, Math.max(selectedYear, birthYear))
+    } catch (e) {
+      console.error(e)
+      return null
+    }
+  }, [chart, selectedYear, birthYear])
 
   return (
     <div className="app">
@@ -39,8 +53,14 @@ export default function App() {
 
       {chart && (
         <main className="chart-area">
-          <ChartGrid chart={chart} name={input!.name} />
-          <ReadingPanel chart={chart} />
+          <div className="chart-col">
+            {yearly && <YearBar yearly={yearly} birthYear={birthYear} />}
+            <ChartGrid chart={chart} name={input!.name} yearly={yearly} />
+          </div>
+          <div className="side-col">
+            {yearly && <YearlyPanel chart={chart} yearly={yearly} />}
+            <ReadingPanel chart={chart} />
+          </div>
         </main>
       )}
     </div>

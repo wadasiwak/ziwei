@@ -31,3 +31,29 @@ if (entries.length !== 168 || bad) {
   process.exit(1)
 }
 console.log('OK: 168 entries, all stars × palaces covered')
+
+// 流年四化 × 十二宮 48 則
+const ysrc = readFileSync(new URL('../src/content/yearlyMutagens.ts', import.meta.url), 'utf8')
+const yentries = JSON.parse(ysrc.slice(ysrc.indexOf('= [') + 2, ysrc.lastIndexOf(']') + 1))
+const yseen = new Set()
+let ybad = 0
+for (const e of yentries) {
+  yseen.add(`${e.mutagen}|${e.palace}`)
+  if (!e.title || !e.text || e.text.length < 60) {
+    console.error(`bad yearly entry: ${e.mutagen}|${e.palace}`)
+    ybad++
+  }
+}
+for (const m of ['祿', '權', '科', '忌']) {
+  for (const p of PALACES) {
+    if (!yseen.has(`${m}|${p}`)) {
+      console.error(`missing yearly: ${m}|${p}`)
+      ybad++
+    }
+  }
+}
+if (yentries.length !== 48 || ybad) {
+  console.error(`FAIL yearly: ${yentries.length} entries, ${ybad} problems`)
+  process.exit(1)
+}
+console.log('OK: 48 yearly mutagen entries covered')

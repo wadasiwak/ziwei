@@ -75,6 +75,17 @@ try {
     if (!borrow.includes('借對宮')) fail('空宮應顯示借對宮提示')
   }
 
+  // 6. 流年：總覽面板 + 年份切換
+  const yearlyText = await page.textContent('.yearly-panel')
+  if (!yearlyText.includes('流年命宮在本命')) fail('流年總覽應顯示流年命宮')
+  if (!yearlyText.includes('化忌')) fail('流年總覽應顯示化忌落點')
+  const yearBefore = await page.textContent('.year-bar .year-label')
+  await page.click('.year-bar button:first-child') // 前一年
+  const yearAfter = await page.textContent('.year-bar .year-label')
+  if (yearBefore === yearAfter) fail('切換年份後年份列應更新')
+  const soulTags = await page.$$('.yearly-tag.yearly-soul')
+  if (soulTags.length !== 1) fail(`盤面應恰有一個流年命宮標記，實得 ${soulTags.length}`)
+
   await browser.close()
   console.log('e2e OK：排盤、解讀、存取命盤、空宮借對宮全部通過')
 } finally {

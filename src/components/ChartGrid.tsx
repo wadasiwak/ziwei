@@ -1,4 +1,5 @@
 import type FunctionalAstrolabe from 'iztro/lib/astro/FunctionalAstrolabe'
+import { YEARLY_SHORT, type YearlyInfo } from '../lib/chart'
 import { useStore } from '../state'
 import PalaceCell from './PalaceCell'
 
@@ -10,9 +11,25 @@ const BRANCH_AREA: Record<string, string> = {
   寅: 'b-yin', 丑: 'b-chou', 子: 'b-zi', 亥: 'b-hai',
 }
 
-export default function ChartGrid({ chart, name }: { chart: FunctionalAstrolabe; name: string }) {
+const MUTAGEN_ORDER = ['祿', '權', '科', '忌']
+
+export default function ChartGrid({
+  chart,
+  name,
+  yearly,
+}: {
+  chart: FunctionalAstrolabe
+  name: string
+  yearly: YearlyInfo | null
+}) {
   const selectedPalace = useStore((s) => s.selectedPalace)
   const selectPalace = useStore((s) => s.selectPalace)
+
+  const yearlyMutagenOf = (starName: string): string | undefined => {
+    if (!yearly) return undefined
+    const i = yearly.mutagenStars.indexOf(starName)
+    return i >= 0 ? MUTAGEN_ORDER[i] : undefined
+  }
 
   return (
     <div className="chart-grid">
@@ -22,6 +39,9 @@ export default function ChartGrid({ chart, name }: { chart: FunctionalAstrolabe;
             palace={p}
             selected={selectedPalace === p.name}
             onClick={() => selectPalace(selectedPalace === p.name ? null : p.name)}
+            yearlyName={yearly ? YEARLY_SHORT[yearly.palaceNames[p.index]] ?? null : null}
+            isYearlySoul={yearly?.soulPalaceIndex === p.index}
+            yearlyMutagenOf={yearlyMutagenOf}
           />
         </div>
       ))}
