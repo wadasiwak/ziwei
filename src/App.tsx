@@ -161,6 +161,11 @@ export default function App() {
           </div>
         </main>
       )}
+
+      <footer className="app-footer">
+        © 2026 wadasiwak · 解讀內容未經授權禁止轉載 · 排盤：
+        <a href="https://github.com/SylarLong/iztro" target="_blank" rel="noreferrer">iztro</a>
+      </footer>
     </div>
   )
 }

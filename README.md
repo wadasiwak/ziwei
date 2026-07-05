@@ -25,3 +25,11 @@ npm run e2e        # Playwright 端到端（需先 build）
 ## 部署
 
 Push 到 main 之後由 GitHub Actions 自動 build 並部署到 GitHub Pages。
+
+## 版權聲明 / Copyright
+
+© 2026 wadasiwak. All rights reserved.
+
+程式碼與解讀文字（含 14 主星 × 12 宮共 168 則主星宮位解讀，為原創內容）版權所有，保留一切權利，未經授權禁止轉載。
+
+排盤引擎使用開源庫 [iztro](https://github.com/SylarLong/iztro)（MIT License），其授權條款見該專案。
