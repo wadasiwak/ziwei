@@ -56,6 +56,15 @@ body {
   color: var(--accent-dim);
 }
 
+.app-header h1.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.app-header h1.clickable:hover {
+  color: var(--soul);
+}
+
 .hero {
   text-align: center;
   margin: 40px 0 8px;

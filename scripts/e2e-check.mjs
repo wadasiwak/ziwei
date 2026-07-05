@@ -138,6 +138,12 @@ try {
   const gcPath = await page.evaluate(() => window.goatcounter.path())
   if (gcPath.includes('d=') || gcPath.includes('?')) fail(`goatcounter path 不可含 query，實得: ${gcPath}`)
 
+  // 15. 點左上角標題 = 重新排盤（開關表單）
+  await page.click('.app-header h1')
+  await page.waitForSelector('.birth-form', { timeout: 3000 })
+  await page.click('.app-header h1')
+  if (await page.$('.birth-form')) fail('再點一次標題應收起表單')
+
   await browser.close()
   console.log('e2e OK：排盤、解讀、存取、流年流月、三方四正、雙星、格局、分享、AI prompt 全部通過')
 } finally {

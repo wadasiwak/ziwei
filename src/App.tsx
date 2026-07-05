@@ -92,7 +92,13 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>紫微斗數排盤</h1>
+        <h1
+          className={chart ? 'clickable' : ''}
+          title={chart ? '重新排盤' : undefined}
+          onClick={() => chart && setShowForm((v) => !v)}
+        >
+          紫微斗數排盤
+        </h1>
         {chart && input && (
           <div className="header-actions">
             <button
