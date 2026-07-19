@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { TIME_OPTIONS, type BirthInput } from '../lib/chart'
+import { DEMO_INPUT } from '../lib/demo'
 import { useStore } from '../state'
 
 const currentYear = new Date().getFullYear()
@@ -19,6 +20,7 @@ export default function BirthForm({ onDone }: { onDone?: () => void }) {
   const [day, setDay] = useState(prev ? Number(prev.date.split('-')[2]) : 1)
   const [timeIndex, setTimeIndex] = useState(prev?.timeIndex ?? 6)
   const [isLeapMonth, setIsLeapMonth] = useState(prev?.isLeapMonth ?? false)
+  const [showTimeHint, setShowTimeHint] = useState(false)
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,6 +33,11 @@ export default function BirthForm({ onDone }: { onDone?: () => void }) {
       isLeapMonth: calendar === 'lunar' && isLeapMonth,
     }
     setInput(input)
+    onDone?.()
+  }
+
+  const loadDemo = () => {
+    setInput(DEMO_INPUT)
     onDone?.()
   }
 
@@ -56,7 +63,7 @@ export default function BirthForm({ onDone }: { onDone?: () => void }) {
           </select>
         </label>
       </div>
-      <div className="form-row">
+      <div className="form-row date-row">
         <label>
           年
           <select value={year} onChange={(e) => setYear(Number(e.target.value))}>
@@ -97,7 +104,26 @@ export default function BirthForm({ onDone }: { onDone?: () => void }) {
             ))}
           </select>
         </label>
+        <button
+          type="button"
+          className="link-btn time-hint-toggle"
+          onClick={() => setShowTimeHint((v) => !v)}
+        >
+          不知道出生時間？
+        </button>
+      </div>
+      {showTimeHint && (
+        <p className="time-hint">
+          常見做法是先用大概的時段挑一個近似時辰（例如只記得「早上」就先選辰時或巳時）排盤參考。
+          時辰決定命宮、身宮的位置，差一個時辰整張盤的宮位排布就不同，所以主星解讀僅供初步參考，
+          建議之後向長輩或出生證明確認正確時間再排一次。
+        </p>
+      )}
+      <div className="form-row submit-row">
         <button type="submit" className="primary">排盤</button>
+        <button type="button" className="secondary demo-btn" onClick={loadDemo} title="不輸入生日，先載入一張示範命盤看看功能">
+          先看範例命盤
+        </button>
       </div>
       <p className="privacy-note">所有計算都在你的瀏覽器完成，生日資料不會上傳到任何伺服器。</p>
     </form>

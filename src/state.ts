@@ -13,10 +13,20 @@ type State = {
   selectPalace: (name: string | null) => void
   setYear: (year: number) => void
   setMonth: (month: number | null) => void
-  saveCurrent: () => void
+  /** 回傳 'saved' 或 'duplicate'（已保存過同一張盤） */
+  saveCurrent: () => 'saved' | 'duplicate' | 'noop'
   loadSaved: (id: string) => void
   deleteSaved: (id: string) => void
+  /** 改名／改備註 */
+  updateSaved: (id: string, patch: { name?: string; note?: string }) => void
 }
+
+const sameChart = (c: SavedChart, input: BirthInput) =>
+  c.name === input.name &&
+  c.date === input.date &&
+  c.timeIndex === input.timeIndex &&
+  c.calendar === input.calendar &&
+  c.gender === input.gender
 
 export const useStore = create<State>((set, get) => ({
   input: null,
@@ -35,31 +45,34 @@ export const useStore = create<State>((set, get) => ({
 
   saveCurrent: () => {
     const { input, saved } = get()
-    if (!input) return
-    const exists = saved.some(
-      (c) =>
-        c.name === input.name &&
-        c.date === input.date &&
-        c.timeIndex === input.timeIndex &&
-        c.calendar === input.calendar &&
-        c.gender === input.gender,
-    )
-    if (exists) return
+    if (!input) return 'noop'
+    if (saved.some((c) => sameChart(c, input))) return 'duplicate'
     const next = [...saved, { ...input, id: newId() }]
     saveCharts(next)
     set({ saved: next })
+    return 'saved'
   },
 
   loadSaved: (id) => {
     const chart = get().saved.find((c) => c.id === id)
     if (chart) {
-      const { id: _id, ...input } = chart
+      const { id: _id, note: _note, ...input } = chart
       set({ input, selectedPalace: null })
     }
   },
 
   deleteSaved: (id) => {
     const next = get().saved.filter((c) => c.id !== id)
+    saveCharts(next)
+    set({ saved: next })
+  },
+
+  updateSaved: (id, patch) => {
+    const next = get().saved.map((c) =>
+      c.id === id
+        ? { ...c, ...(patch.name !== undefined ? { name: patch.name.trim() || c.name } : {}), ...(patch.note !== undefined ? { note: patch.note.trim() } : {}) }
+        : c,
+    )
     saveCharts(next)
     set({ saved: next })
   },

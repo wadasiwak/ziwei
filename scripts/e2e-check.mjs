@@ -144,8 +144,72 @@ try {
   await page.click('.app-header h1')
   if (await page.$('.birth-form')) fail('再點一次標題應收起表單')
 
+  // 16. 新手引導：時辰提示 + 範例命盤一鍵載入
+  const page3 = await context.newPage()
+  await page3.goto(BASE_URL)
+  await page3.waitForSelector('.birth-form')
+  await page3.click('.time-hint-toggle')
+  const timeHint = await page3.textContent('.time-hint')
+  if (!timeHint.includes('近似時辰')) fail('時辰提示應說明近似時辰做法')
+  if (!timeHint.includes('命宮')) fail('時辰提示應說明時辰影響哪些宮位')
+  await page3.click('.demo-btn')
+  await page3.waitForSelector('.chart-grid', { timeout: 5000 })
+  const demoBanner = await page3.textContent('.demo-banner')
+  if (!demoBanner.includes('範例命盤')) fail('載入範例後應顯示範例標示')
+  const demoCenter = await page3.textContent('.chart-center')
+  if (!demoCenter.includes('範例命盤') || !demoCenter.includes('金四局')) fail('範例命盤應為 1992-7-7 申時女（金四局）')
+
+  // 17. 小辭典：可展開、含核心術語
+  await page3.click('.glossary > summary')
+  const glossaryText = await page3.textContent('.glossary-list')
+  for (const term of ['三方四正', '四化', '大限', '命宮', '身宮']) {
+    if (!glossaryText.includes(term)) fail(`小辭典應含「${term}」`)
+  }
+
+  // 18. 分享連結帶檢視狀態：選宮位＋流月後複製，開啟連結應還原視圖
+  await page3.click('[data-palace="夫妻"]')
+  await page3.waitForSelector('.reading-panel')
+  await page3.click('.month-bar button:nth-of-type(5)')
+  await page3.waitForSelector('.chart-grid .yearly-tag.monthly-soul')
+  await page3.click('.header-actions button:first-child')
+  const stateUrl = await page3.evaluate(() => navigator.clipboard.readText())
+  if (!stateUrl.includes('m=5') || !decodeURIComponent(stateUrl).includes('p=夫妻')) fail(`分享連結應帶宮位與流月參數，實得: ${stateUrl}`)
+  const page4 = await context.newPage()
+  await page4.goto(stateUrl)
+  await page4.waitForSelector('.reading-panel', { timeout: 5000 })
+  const restoredReading = await page4.textContent('.reading-panel h3')
+  if (!restoredReading.includes('夫妻')) fail('開啟帶狀態連結應還原選中的宮位')
+  const activeMonth = await page4.textContent('.month-bar button.active')
+  if (!activeMonth.includes('五')) fail('開啟帶狀態連結應還原流月')
+  await page4.close()
+
+  // 19. 存成圖片：桌機應觸發 PNG 下載
+  const [download] = await Promise.all([
+    page3.waitForEvent('download', { timeout: 8000 }),
+    page3.click('.header-actions button:nth-of-type(3)'),
+  ])
+  if (!download.suggestedFilename().endsWith('.png')) fail(`存成圖片應下載 PNG，實得: ${download.suggestedFilename()}`)
+
+  // 20. 保存命盤管理：保存 → 改名＋備註 → 兩段式刪除
+  const chipsBefore = (await page3.$$('.saved-chip')).length
+  await page3.click('.chip-save')
+  await page3.waitForFunction((n) => document.querySelectorAll('.saved-chip').length === n + 1, chipsBefore)
+  await page3.click(`.saved-chip:nth-of-type(${chipsBefore + 1}) .chip-edit`)
+  await page3.fill('.chip-editor label:nth-of-type(1) input', '示範改名')
+  await page3.fill('.chip-editor label:nth-of-type(2) input', '測試備註')
+  await page3.click('.chip-editor-actions .primary')
+  const chipText = await page3.textContent(`.saved-chip:nth-of-type(${chipsBefore + 1})`)
+  if (!chipText.includes('示範改名') || !chipText.includes('測試備註')) fail('改名與備註應顯示在命盤 chip 上')
+  const delSelector = `.saved-chip:nth-of-type(${chipsBefore + 1}) .chip-del`
+  await page3.click(delSelector)
+  const delText = await page3.textContent(delSelector)
+  if (!delText.includes('確定刪除')) fail('刪除應先要求確認')
+  await page3.click(delSelector)
+  await page3.waitForFunction((n) => document.querySelectorAll('.saved-chip').length === n, chipsBefore)
+  await page3.close()
+
   await browser.close()
-  console.log('e2e OK：排盤、解讀、存取、流年流月、三方四正、雙星、格局、分享、AI prompt 全部通過')
+  console.log('e2e OK：排盤、解讀、存取、流年流月、三方四正、雙星、格局、分享、AI prompt、範例命盤、小辭典、帶狀態分享、存圖、保存管理 全部通過')
 } finally {
   server.kill()
 }

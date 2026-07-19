@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import BirthForm from './components/BirthForm'
 import ChartGrid from './components/ChartGrid'
+import Glossary from './components/Glossary'
 import PatternCard from './components/PatternCard'
 import ReadingPanel from './components/ReadingPanel'
 import SavedCharts from './components/SavedCharts'
 import YearlyPanel, { MonthBar, YearBar } from './components/YearlyPanel'
 import { computeChart, computeMonthly, computeYearly } from './lib/chart'
+import { isDemoInput } from './lib/demo'
 import { detectPatterns } from './lib/patterns'
 import { buildLlmPrompt } from './lib/prompt'
-import { inputToParams, paramsToInput, shareUrl } from './lib/share'
+import { makeChartCard, shareOrDownload } from './lib/shareCard'
+import { inputToParams, paramsToInput, paramsToView, shareUrl } from './lib/share'
 import { useStore } from './state'
 
-function useCopy(): [string | null, string | null, (text: string, label: string, toast: string) => void] {
+function useCopy(): [string | null, string | null, (text: string, label: string, toast: string) => void, (msg: string) => void] {
   const [copied, setCopied] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const copy = (text: string, label: string, toastMsg: string) => {
@@ -22,30 +25,45 @@ function useCopy(): [string | null, string | null, (text: string, label: string,
       setTimeout(() => setToast(null), 8000)
     })
   }
-  return [copied, toast, copy]
+  const showToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 8000)
+  }
+  return [copied, toast, copy, showToast]
 }
 
 export default function App() {
   const input = useStore((s) => s.input)
   const setInput = useStore((s) => s.setInput)
+  const selectedPalace = useStore((s) => s.selectedPalace)
+  const selectPalace = useStore((s) => s.selectPalace)
   const selectedYear = useStore((s) => s.selectedYear)
   const selectedMonth = useStore((s) => s.selectedMonth)
+  const setYear = useStore((s) => s.setYear)
+  const setMonth = useStore((s) => s.setMonth)
   const [showForm, setShowForm] = useState(false)
-  const [copied, toast, copy] = useCopy()
+  const [copied, toast, copy, showToast] = useCopy()
 
-  // 開站時從網址讀取分享的命盤參數
+  // 開站時從網址讀取分享的命盤參數與檢視狀態（宮位／流年／流月）
   useEffect(() => {
     const fromUrl = paramsToInput(location.search)
-    if (fromUrl) setInput(fromUrl)
+    if (fromUrl) {
+      setInput(fromUrl)
+      const view = paramsToView(location.search)
+      if (view.year !== undefined) setYear(view.year)
+      if (view.month !== undefined) setMonth(view.month)
+      if (view.palace !== undefined) selectPalace(view.palace)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // 命盤變動時把參數同步到網址，直接複製網址列也能分享
+  // 命盤或檢視狀態變動時同步到網址，直接複製網址列也能分享同一個視圖
   useEffect(() => {
     if (input) {
-      history.replaceState(null, '', `${location.pathname}?${inputToParams(input)}`)
+      const view = { palace: selectedPalace, year: selectedYear, month: selectedMonth }
+      history.replaceState(null, '', `${location.pathname}?${inputToParams(input, view)}`)
     }
-  }, [input])
+  }, [input, selectedPalace, selectedYear, selectedMonth])
 
   const chart = useMemo(() => {
     if (!input) return null
@@ -89,6 +107,18 @@ export default function App() {
 
   const patterns = useMemo(() => (chart ? detectPatterns(chart) : []), [chart])
 
+  const saveImage = async () => {
+    if (!chart || !input) return
+    try {
+      const blob = await makeChartCard(chart, input, patterns)
+      await shareOrDownload(blob, `紫微命盤-${input.name}.png`)
+      showToast('已產生命盤概要卡 ✓ 手機會跳出分享面板，電腦則直接下載 PNG。')
+    } catch (e) {
+      console.error(e)
+      showToast('圖片產生失敗，請改用「分享」複製連結。')
+    }
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -104,7 +134,7 @@ export default function App() {
             <button
               className="secondary"
               title="複製這張命盤的專屬連結，傳給對方打開就是同一張盤"
-              onClick={() => copy(shareUrl(input), 'share', '已複製命盤連結 ✓ 用 LINE 或訊息傳給對方，打開就是這張盤（生日資料只在連結裡，不經任何伺服器）。')}
+              onClick={() => copy(shareUrl(input, { palace: selectedPalace, year: selectedYear, month: selectedMonth }), 'share', '已複製命盤連結 ✓ 用 LINE 或訊息傳給對方，打開就是這張盤（連目前選的宮位、流年流月都一起還原；生日資料只在連結裡，不經任何伺服器）。')}
             >
               {copied === 'share' ? '已複製 ✓' : '分享'}
             </button>
@@ -114,6 +144,13 @@ export default function App() {
               onClick={() => copy(buildLlmPrompt(chart, input, yearly, monthly), 'ai', '已複製整張命盤資料 ✓ 接著開啟 ChatGPT、Claude 或任何 AI，直接「貼上→送出」，就會得到這張盤的綜合解讀。')}
             >
               {copied === 'ai' ? '已複製 ✓' : 'AI 解讀'}
+            </button>
+            <button
+              className="secondary"
+              title="把命盤重點（命宮主星、身宮、格局）做成一張圖，方便傳給朋友或存起來"
+              onClick={saveImage}
+            >
+              存成圖片
             </button>
             <button className="secondary" onClick={() => setShowForm((v) => !v)}>
               {showForm ? '收起' : '重新排盤'}
@@ -139,6 +176,13 @@ export default function App() {
 
       {input && !chart && <p className="error">這個日期無法排盤，請確認日期是否存在（例如農曆閏月、大小月）。</p>}
 
+      {chart && isDemoInput(input) && (
+        <p className="demo-banner">
+          這是<strong>範例命盤</strong>（1992-7-7 申時・女），先隨意點宮位、切流年感受一下。
+          看完點右上角「重新排盤」輸入自己的生日。
+        </p>
+      )}
+
       {chart && (
         <main className="chart-area">
           <div className="chart-col">
@@ -153,6 +197,7 @@ export default function App() {
               <span><em className="body-badge">身</em> 身宮</span>
               <span>虛線框＝所選宮位的三方四正</span>
             </div>
+            <Glossary />
           </div>
           <div className="side-col">
             <PatternCard patterns={patterns} />
