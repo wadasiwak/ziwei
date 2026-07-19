@@ -1,5 +1,5 @@
 import type FunctionalAstrolabe from 'iztro/lib/astro/FunctionalAstrolabe'
-import { YEARLY_SHORT, type MonthlyInfo, type YearlyInfo } from '../lib/chart'
+import { DECADAL_SHORT, YEARLY_SHORT, type DecadalInfo, type MonthlyInfo, type YearlyInfo } from '../lib/chart'
 import { useStore } from '../state'
 import PalaceCell from './PalaceCell'
 
@@ -18,11 +18,13 @@ export default function ChartGrid({
   name,
   yearly,
   monthly,
+  decadal,
 }: {
   chart: FunctionalAstrolabe
   name: string
   yearly: YearlyInfo | null
   monthly: MonthlyInfo | null
+  decadal: DecadalInfo | null
 }) {
   const selectedPalace = useStore((s) => s.selectedPalace)
   const selectPalace = useStore((s) => s.selectPalace)
@@ -30,6 +32,12 @@ export default function ChartGrid({
   const yearlyMutagenOf = (starName: string): string | undefined => {
     if (!yearly) return undefined
     const i = yearly.mutagenStars.indexOf(starName)
+    return i >= 0 ? MUTAGEN_ORDER[i] : undefined
+  }
+
+  const decadalMutagenOf = (starName: string): string | undefined => {
+    if (!decadal) return undefined
+    const i = decadal.mutagenStars.indexOf(starName)
     return i >= 0 ? MUTAGEN_ORDER[i] : undefined
   }
 
@@ -52,7 +60,10 @@ export default function ChartGrid({
             yearlyName={yearly ? YEARLY_SHORT[yearly.palaceNames[p.index]] ?? null : null}
             isYearlySoul={yearly?.soulPalaceIndex === p.index}
             isMonthlySoul={monthly?.soulPalaceIndex === p.index}
+            decadalName={decadal ? DECADAL_SHORT[decadal.palaceNames[p.index]] ?? null : null}
+            isDecadalSoul={decadal?.index === p.index}
             yearlyMutagenOf={yearlyMutagenOf}
+            decadalMutagenOf={decadalMutagenOf}
           />
         </div>
       ))}

@@ -8,11 +8,14 @@ type State = {
   selectedYear: number
   /** 農曆月 1–12，null 表示不看流月 */
   selectedMonth: number | null
+  /** 選中的大限（以大限宮在 palaces[] 的索引表示），null 表示不看大限 */
+  selectedDecadal: number | null
   saved: SavedChart[]
   setInput: (input: BirthInput) => void
   selectPalace: (name: string | null) => void
   setYear: (year: number) => void
   setMonth: (month: number | null) => void
+  setDecadal: (index: number | null) => void
   /** 回傳 'saved' 或 'duplicate'（已保存過同一張盤） */
   saveCurrent: () => 'saved' | 'duplicate' | 'noop'
   loadSaved: (id: string) => void
@@ -33,13 +36,17 @@ export const useStore = create<State>((set, get) => ({
   selectedPalace: null,
   selectedYear: new Date().getFullYear(),
   selectedMonth: null,
+  selectedDecadal: null,
   saved: loadCharts(),
 
-  setInput: (input) => set({ input, selectedPalace: null }),
+  // 大限索引是「這張盤」的宮位索引，換盤時必須歸零
+  setInput: (input) => set({ input, selectedPalace: null, selectedDecadal: null }),
 
   setYear: (year) => set({ selectedYear: year }),
 
   setMonth: (month) => set({ selectedMonth: month }),
+
+  setDecadal: (index) => set({ selectedDecadal: index }),
 
   selectPalace: (name) => set({ selectedPalace: name }),
 
@@ -57,7 +64,7 @@ export const useStore = create<State>((set, get) => ({
     const chart = get().saved.find((c) => c.id === id)
     if (chart) {
       const { id: _id, note: _note, ...input } = chart
-      set({ input, selectedPalace: null })
+      set({ input, selectedPalace: null, selectedDecadal: null })
     }
   },
 

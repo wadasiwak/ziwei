@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import BirthForm from './components/BirthForm'
 import ChartGrid from './components/ChartGrid'
+import DecadalPanel from './components/DecadalPanel'
 import Glossary from './components/Glossary'
 import PatternCard from './components/PatternCard'
 import ReadingPanel from './components/ReadingPanel'
 import SavedCharts from './components/SavedCharts'
-import YearlyPanel, { MonthBar, YearBar } from './components/YearlyPanel'
-import { computeChart, computeMonthly, computeYearly } from './lib/chart'
+import YearlyPanel, { DecadalBar, MonthBar, YearBar } from './components/YearlyPanel'
+import { computeChart, computeMonthly, computeYearly, listDecadals } from './lib/chart'
 import { isDemoInput } from './lib/demo'
 import { detectPatterns } from './lib/patterns'
 import { buildLlmPrompt } from './lib/prompt'
@@ -39,8 +40,10 @@ export default function App() {
   const selectPalace = useStore((s) => s.selectPalace)
   const selectedYear = useStore((s) => s.selectedYear)
   const selectedMonth = useStore((s) => s.selectedMonth)
+  const selectedDecadal = useStore((s) => s.selectedDecadal)
   const setYear = useStore((s) => s.setYear)
   const setMonth = useStore((s) => s.setMonth)
+  const setDecadal = useStore((s) => s.setDecadal)
   const [showForm, setShowForm] = useState(false)
   const [copied, toast, copy, showToast] = useCopy()
 
@@ -53,6 +56,7 @@ export default function App() {
       if (view.year !== undefined) setYear(view.year)
       if (view.month !== undefined) setMonth(view.month)
       if (view.palace !== undefined) selectPalace(view.palace)
+      if (view.decadal !== undefined) setDecadal(view.decadal)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -60,10 +64,10 @@ export default function App() {
   // 命盤或檢視狀態變動時同步到網址，直接複製網址列也能分享同一個視圖
   useEffect(() => {
     if (input) {
-      const view = { palace: selectedPalace, year: selectedYear, month: selectedMonth }
+      const view = { palace: selectedPalace, year: selectedYear, month: selectedMonth, decadal: selectedDecadal }
       history.replaceState(null, '', `${location.pathname}?${inputToParams(input, view)}`)
     }
-  }, [input, selectedPalace, selectedYear, selectedMonth])
+  }, [input, selectedPalace, selectedYear, selectedMonth, selectedDecadal])
 
   const chart = useMemo(() => {
     if (!input) return null
@@ -105,6 +109,21 @@ export default function App() {
     }
   }, [chart, yearly, selectedMonth])
 
+  const decadals = useMemo(() => {
+    if (!chart) return null
+    try {
+      return listDecadals(chart)
+    } catch (e) {
+      console.error(e)
+      return null
+    }
+  }, [chart])
+
+  const decadal = useMemo(
+    () => (decadals && selectedDecadal !== null ? decadals.find((d) => d.index === selectedDecadal) ?? null : null),
+    [decadals, selectedDecadal],
+  )
+
   const patterns = useMemo(() => (chart ? detectPatterns(chart) : []), [chart])
 
   const saveImage = async () => {
@@ -134,7 +153,7 @@ export default function App() {
             <button
               className="secondary"
               title="複製這張命盤的專屬連結，傳給對方打開就是同一張盤"
-              onClick={() => copy(shareUrl(input, { palace: selectedPalace, year: selectedYear, month: selectedMonth }), 'share', '已複製命盤連結 ✓ 用 LINE 或訊息傳給對方，打開就是這張盤（連目前選的宮位、流年流月都一起還原；生日資料只在連結裡，不經任何伺服器）。')}
+              onClick={() => copy(shareUrl(input, { palace: selectedPalace, year: selectedYear, month: selectedMonth, decadal: selectedDecadal }), 'share', '已複製命盤連結 ✓ 用 LINE 或訊息傳給對方，打開就是這張盤（連目前選的宮位、大限、流年流月都一起還原；生日資料只在連結裡，不經任何伺服器）。')}
             >
               {copied === 'share' ? '已複製 ✓' : '分享'}
             </button>
@@ -186,12 +205,15 @@ export default function App() {
       {chart && (
         <main className="chart-area">
           <div className="chart-col">
-            {yearly && <YearBar yearly={yearly} birthYear={birthYear} />}
+            {decadals && yearly && <DecadalBar decadals={decadals} yearly={yearly} />}
+            {yearly && <YearBar yearly={yearly} birthYear={birthYear} decadal={decadal} />}
             {yearly && <MonthBar monthly={monthly} />}
-            <ChartGrid chart={chart} name={input!.name} yearly={yearly} monthly={monthly} />
+            <ChartGrid chart={chart} name={input!.name} yearly={yearly} monthly={monthly} decadal={decadal} />
             <div className="chart-legend">
               <span><b className="mutagen mut-lu">祿</b> 生年四化</span>
+              <span><b className="mutagen dec mut-quan">權</b> 大限四化</span>
               <span><b className="mutagen flow mut-ji">忌</b> 流年／流月四化</span>
+              <span><em className="yearly-tag decadal-tag decadal-soul">大命</em> 大限命宮</span>
               <span><em className="yearly-tag yearly-soul">年命</em> 流年命宮</span>
               <span><em className="yearly-tag monthly-soul">月命</em> 流月命宮</span>
               <span><em className="body-badge">身</em> 身宮</span>
@@ -201,6 +223,7 @@ export default function App() {
           </div>
           <div className="side-col">
             <PatternCard patterns={patterns} />
+            {decadal && <DecadalPanel chart={chart} decadal={decadal} />}
             {yearly && <YearlyPanel chart={chart} yearly={yearly} monthly={monthly} />}
             <ReadingPanel chart={chart} />
           </div>

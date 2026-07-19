@@ -108,3 +108,47 @@ export const YEARLY_SHORT: Record<string, string> = {
   財帛: '年財', 疾厄: '年疾', 遷移: '年遷', 僕役: '年友',
   官祿: '年官', 田宅: '年田', 福德: '年福', 父母: '年父',
 }
+
+export type DecadalInfo = {
+  /** 大限宮在 palaces[] 的索引 */
+  index: number
+  stem: string
+  branch: string
+  /** 虛歲起訖 */
+  range: [number, number]
+  /** 對應西元年起訖（虛歲 = 西元年 − 出生年 + 1） */
+  yearRange: [number, number]
+  /** 十二大限宮名，對齊 palaces[] */
+  palaceNames: string[]
+  /** 大限四化星名，依 [祿, 權, 科, 忌] 順序 */
+  mutagenStars: string[]
+}
+
+// 列出十二個大限（依起運歲數排序）。宮名與四化以 iztro 為準：
+// 用「該大限起始虛歲對應的西元年」反查 horoscope 取得，不自行推算順逆。
+// 虛歲以農曆年計，出生在春節前的人農曆生年比國曆早一年，故取 lunarYear。
+export function listDecadals(chart: FunctionalAstrolabe): DecadalInfo[] {
+  const birthYear = chart.rawDates.lunarDate.lunarYear
+  return [...chart.palaces]
+    .sort((a, b) => a.decadal.range[0] - b.decadal.range[0])
+    .map((p) => {
+      const [from, to] = p.decadal.range
+      const h = chart.horoscope(`${birthYear + from - 1}-6-1`)
+      return {
+        index: p.index,
+        stem: p.decadal.heavenlyStem,
+        branch: p.decadal.earthlyBranch,
+        range: [from, to],
+        yearRange: [birthYear + from - 1, birthYear + to - 1],
+        palaceNames: h.decadal.palaceNames,
+        mutagenStars: h.decadal.mutagen,
+      }
+    })
+}
+
+/** 盤面上顯示用的大限宮名縮寫 */
+export const DECADAL_SHORT: Record<string, string> = {
+  命宮: '大命', 兄弟: '大兄', 夫妻: '大夫', 子女: '大子',
+  財帛: '大財', 疾厄: '大疾', 遷移: '大遷', 僕役: '大友',
+  官祿: '大官', 田宅: '大田', 福德: '大福', 父母: '大父',
+}

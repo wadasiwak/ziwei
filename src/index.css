@@ -13,6 +13,8 @@
   --mut-quan: #c79bff;
   --mut-ke: #6ab8ff;
   --mut-ji: #ff7a7a;
+  --dec: #4dd0cf; /* 大限層：青色系，與流年（金）、流月（藍）區分 */
+  --dec-dim: #37918f;
   font-family: 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', system-ui, sans-serif;
   color-scheme: dark;
 }
@@ -584,11 +586,67 @@ button.secondary { color: var(--accent); }
   color: var(--text-dim);
 }
 
+/* ---- 大限選擇列 ---- */
+.decadal-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.decadal-bar-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-right: 4px;
+}
+
+.decadal-bar button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 7px 2px;
+  border-radius: 6px;
+  line-height: 1.3;
+}
+
+.decadal-bar .dec-age { font-size: 11px; }
+.decadal-bar .dec-sb { font-size: 10px; color: var(--text-dim); }
+
+/* 所選流年落在的大限：底線標示 */
+.decadal-bar button.now { box-shadow: inset 0 -2px 0 var(--accent-dim); }
+
+.decadal-bar button.active {
+  background: var(--dec);
+  border-color: var(--dec);
+}
+
+.decadal-bar button.active .dec-age,
+.decadal-bar button.active .dec-sb {
+  color: #0d2321;
+  font-weight: 700;
+}
+
 /* ---- 年份選擇列 ---- */
 .year-bar {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* 選了大限時，流年列標示該大限涵蓋的年份區間 */
+.year-bar .dec-range {
+  font-size: 12px;
+  color: var(--dec);
+  border: 1px solid var(--dec);
+  border-radius: 6px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.year-bar .dec-range.out {
+  color: var(--text-dim);
+  border-color: var(--border);
 }
 
 .year-bar button {
@@ -733,6 +791,17 @@ button.secondary { color: var(--accent); }
 .mutagen.flow.mut-ke { color: var(--mut-ke); border-color: var(--mut-ke); }
 .mutagen.flow.mut-ji { color: var(--mut-ji); border-color: var(--mut-ji); }
 
+/* 大限四化：外框虛線，與本命（實心）、流年流月（外框實線）區分 */
+.mutagen.dec {
+  background: transparent;
+  border: 1px dashed;
+}
+
+.mutagen.dec.mut-lu { color: var(--mut-lu); border-color: var(--mut-lu); }
+.mutagen.dec.mut-quan { color: var(--mut-quan); border-color: var(--mut-quan); }
+.mutagen.dec.mut-ke { color: var(--mut-ke); border-color: var(--mut-ke); }
+.mutagen.dec.mut-ji { color: var(--mut-ji); border-color: var(--mut-ji); }
+
 /* 宮位角落的流年宮名 */
 .yearly-tag {
   font-style: normal;
@@ -751,6 +820,39 @@ button.secondary { color: var(--accent); }
   color: var(--soul);
   border-color: var(--soul);
   font-weight: 700;
+}
+
+/* 宮位角落的大限宮名：青色系 */
+.yearly-tag.decadal-tag {
+  color: var(--dec-dim);
+  border-color: var(--dec-dim);
+}
+
+.yearly-tag.decadal-tag.decadal-soul {
+  color: var(--dec);
+  border-color: var(--dec);
+  font-weight: 700;
+}
+
+/* ---- 大限總覽 ---- */
+.decadal-panel h3 { color: var(--dec); }
+
+.decadal-reading {
+  border-top: 1px solid var(--border);
+  padding: 8px 0 4px;
+  margin-bottom: 6px;
+}
+
+.decadal-reading h4 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--dec);
+}
+
+.decadal-reading p {
+  font-size: 13px;
+  line-height: 1.75;
+  margin: 0;
 }
 
 /* ---- 小辭典 ---- */
@@ -976,6 +1078,21 @@ button.secondary { color: var(--accent); }
 
   /* 流年列：按鈕放大 */
   .year-bar button { min-height: 38px; min-width: 44px; }
+
+  /* 大限列：不換行、橫向捲動（同流月列） */
+  .decadal-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  .decadal-bar button {
+    flex-shrink: 0;
+    min-height: 42px;
+    min-width: 54px;
+  }
 
   /* 流月列：不換行、橫向捲動 */
   .month-bar {

@@ -1,6 +1,6 @@
 import type FunctionalAstrolabe from 'iztro/lib/astro/FunctionalAstrolabe'
 import { findYearlyReading } from '../content/yearlyMutagens'
-import { LUNAR_MONTH_NAMES, type MonthlyInfo, type YearlyInfo } from '../lib/chart'
+import { LUNAR_MONTH_NAMES, type DecadalInfo, type MonthlyInfo, type YearlyInfo } from '../lib/chart'
 import { useStore } from '../state'
 
 const MUTAGEN_ORDER = ['祿', '權', '科', '忌'] as const
@@ -13,9 +13,46 @@ function palaceOfStar(chart: FunctionalAstrolabe, starName: string) {
   )
 }
 
-export function YearBar({ yearly, birthYear }: { yearly: YearlyInfo; birthYear: number }) {
+/** 大限選擇列：十二個十年區間，點選後盤面疊加大限層 */
+export function DecadalBar({ decadals, yearly }: { decadals: DecadalInfo[]; yearly: YearlyInfo }) {
+  const selectedDecadal = useStore((s) => s.selectedDecadal)
+  const setDecadal = useStore((s) => s.setDecadal)
+  const setYear = useStore((s) => s.setYear)
+  return (
+    <div className="decadal-bar">
+      <span className="decadal-bar-label">大限</span>
+      {decadals.map((d) => {
+        const isNow = yearly.decadalIndex === d.index // 目前所選流年落在這個大限
+        return (
+          <button
+            key={d.index}
+            className={`${selectedDecadal === d.index ? 'active' : ''} ${isNow ? 'now' : ''}`}
+            title={`${d.range[0]}–${d.range[1]} 歲（${d.yearRange[0]}–${d.yearRange[1]}）`}
+            onClick={() => {
+              if (selectedDecadal === d.index) {
+                setDecadal(null)
+                return
+              }
+              setDecadal(d.index)
+              // 流年連動：所選流年不在這個大限內時，跳到大限起始年
+              if (yearly.year < d.yearRange[0] || yearly.year > d.yearRange[1]) {
+                setYear(d.yearRange[0])
+              }
+            }}
+          >
+            <span className="dec-age">{d.range[0]}–{d.range[1]}</span>
+            <span className="dec-sb">{d.stem}{d.branch}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+export function YearBar({ yearly, birthYear, decadal }: { yearly: YearlyInfo; birthYear: number; decadal: DecadalInfo | null }) {
   const setYear = useStore((s) => s.setYear)
   const thisYear = new Date().getFullYear()
+  const inDecadal = decadal !== null && yearly.year >= decadal.yearRange[0] && yearly.year <= decadal.yearRange[1]
   return (
     <div className="year-bar">
       <button onClick={() => setYear(yearly.year - 1)} disabled={yearly.year <= birthYear} aria-label="前一年">‹</button>
@@ -25,6 +62,11 @@ export function YearBar({ yearly, birthYear }: { yearly: YearlyInfo; birthYear: 
       <button onClick={() => setYear(yearly.year + 1)} aria-label="後一年">›</button>
       {yearly.year !== thisYear && (
         <button className="back-to-now" onClick={() => setYear(thisYear)}>回今年</button>
+      )}
+      {decadal && (
+        <span className={`dec-range ${inDecadal ? '' : 'out'}`}>
+          大限 {decadal.yearRange[0]}–{decadal.yearRange[1]}{!inDecadal && '（此年在大限外）'}
+        </span>
       )}
     </div>
   )

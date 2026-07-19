@@ -183,14 +183,51 @@ try {
   if (!activeMonth.includes('五')) fail('開啟帶狀態連結應還原流月')
   await page4.close()
 
-  // 19. 存成圖片：桌機應觸發 PNG 下載
+  // 19. 大限：範例命盤（壬申陽女逆行、金四局 4 歲起運）
+  const decBtns = await page3.$$('.decadal-bar button')
+  if (decBtns.length !== 12) fail(`大限列應有 12 個區間，實得 ${decBtns.length}`)
+  const firstDec = await page3.textContent('.decadal-bar button:first-of-type')
+  if (!firstDec.includes('4–13') || !firstDec.includes('辛亥')) fail(`第一個大限應為 4–13 辛亥，實得: ${firstDec}`)
+  // 點 34–43 大限（戊申，2025–2034，含目前流年）→ 盤面疊加大限層、面板出現概述
+  await page3.click('.decadal-bar button:nth-of-type(4)')
+  await page3.waitForSelector('.decadal-panel', { timeout: 3000 })
+  const decPanel = await page3.textContent('.decadal-panel')
+  if (!decPanel.includes('大限命宮在本命') || !decPanel.includes('子女')) fail(`大限面板應顯示大限命宮落本命子女宮，實得: ${decPanel.slice(0, 80)}`)
+  const decSouls = await page3.$$('.chart-grid .yearly-tag.decadal-soul')
+  if (decSouls.length !== 1) fail(`盤面應恰有一個大限命宮標記，實得 ${decSouls.length}`)
+  const decTags = await page3.$$('.chart-grid .yearly-tag.decadal-tag')
+  if (decTags.length !== 12) fail(`盤面應有 12 個大限宮名標記，實得 ${decTags.length}`)
+  if ((await page3.$$('.chart-grid .mutagen.dec')).length === 0) fail('盤面應標記大限四化')
+  const decRange = await page3.textContent('.year-bar .dec-range')
+  if (!decRange.includes('2025–2034')) fail(`流年列應標示大限年份區間，實得: ${decRange}`)
+  // 與流年連動：改點 4–13 大限，所選流年不在區間內 → 自動跳到 1995
+  await page3.click('.decadal-bar button:first-of-type')
+  const jumpedYear = await page3.textContent('.year-bar .year-label')
+  if (!jumpedYear.includes('1995')) fail(`點大限後流年應跳到區間起始年 1995，實得: ${jumpedYear}`)
+  const nowDec = await page3.textContent('.decadal-bar button.now')
+  if (!nowDec.includes('4–13')) fail(`所選流年所屬大限應有標示，實得: ${nowDec}`)
+  // 分享連結帶大限（dl=宮位索引），開啟後還原大限視圖
+  await page3.click('.header-actions button:first-child')
+  const decUrl = await page3.evaluate(() => navigator.clipboard.readText())
+  if (!decUrl.includes('dl=')) fail(`分享連結應帶大限參數，實得: ${decUrl}`)
+  const page5 = await context.newPage()
+  await page5.goto(decUrl)
+  await page5.waitForSelector('.decadal-panel', { timeout: 5000 })
+  const restoredDec = await page5.textContent('.decadal-bar button.active')
+  if (!restoredDec.includes('4–13')) fail(`開啟連結應還原選中的大限，實得: ${restoredDec}`)
+  await page5.close()
+  // 再點一次取消大限層
+  await page3.click('.decadal-bar button.active')
+  if (await page3.$('.decadal-panel')) fail('再點一次大限應取消疊加')
+
+  // 20. 存成圖片：桌機應觸發 PNG 下載
   const [download] = await Promise.all([
     page3.waitForEvent('download', { timeout: 8000 }),
     page3.click('.header-actions button:nth-of-type(3)'),
   ])
   if (!download.suggestedFilename().endsWith('.png')) fail(`存成圖片應下載 PNG，實得: ${download.suggestedFilename()}`)
 
-  // 20. 保存命盤管理：保存 → 改名＋備註 → 兩段式刪除
+  // 21. 保存命盤管理：保存 → 改名＋備註 → 兩段式刪除
   const chipsBefore = (await page3.$$('.saved-chip')).length
   await page3.click('.chip-save')
   await page3.waitForFunction((n) => document.querySelectorAll('.saved-chip').length === n + 1, chipsBefore)
@@ -209,7 +246,7 @@ try {
   await page3.close()
 
   await browser.close()
-  console.log('e2e OK：排盤、解讀、存取、流年流月、三方四正、雙星、格局、分享、AI prompt、範例命盤、小辭典、帶狀態分享、存圖、保存管理 全部通過')
+  console.log('e2e OK：排盤、解讀、存取、流年流月、大限、三方四正、雙星、格局、分享、AI prompt、範例命盤、小辭典、帶狀態分享、存圖、保存管理 全部通過')
 } finally {
   server.kill()
 }

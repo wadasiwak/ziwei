@@ -58,6 +58,30 @@ if (yentries.length !== 48 || ybad) {
 }
 console.log('OK: 48 yearly mutagen entries covered')
 
+// 大限命宮落本命十二宮 12 則（每則 100 字以上白話概述）
+const dsrc = readFileSync(new URL('../src/content/decadalPalaces.ts', import.meta.url), 'utf8')
+const dentries = JSON.parse(dsrc.slice(dsrc.indexOf('= [') + 2, dsrc.lastIndexOf(']') + 1))
+const dseen = new Set()
+let dbad = 0
+for (const e of dentries) {
+  dseen.add(e.palace)
+  if (!e.title || !e.text || e.text.length < 100 || e.text.length > 180) {
+    console.error(`bad decadal entry: ${e.palace}（${e.text?.length ?? 0} 字）`)
+    dbad++
+  }
+}
+for (const p of PALACES) {
+  if (!dseen.has(p)) {
+    console.error(`missing decadal: ${p}`)
+    dbad++
+  }
+}
+if (dentries.length !== 12 || dbad) {
+  console.error(`FAIL decadal: ${dentries.length} entries, ${dbad} problems`)
+  process.exit(1)
+}
+console.log('OK: 12 decadal palace entries covered')
+
 // 雙星同宮 24 組（實際會同宮的組合固定就是這 24 種）
 const PAIRS = [
   '紫微天府', '紫微貪狼', '紫微天相', '紫微七殺', '紫微破軍',

@@ -119,6 +119,66 @@ verifyYearly(sample, 2026) // 丙午
 verifyYearly(sample, 2025) // 乙巳
 verifyYearly(sample, 2033) // 癸丑
 
+// ---- 大限驗證 ----
+// 1. 起運歲數 = 五行局數（水二局 2 歲起、木三局 3 歲起…）
+// 2. 順逆：陽男陰女順行、陰男陽女逆行（年干陰陽以農曆生年干為準）
+// 3. 大限四化 = 大限宮干四化；horoscope 反查的大限宮與宮名對齊
+const CLASS_TO_START = { 水二局: 2, 木三局: 3, 金四局: 4, 土五局: 5, 火六局: 6 }
+function verifyDecadal(label, chart) {
+  console.log(`\n[大限 ${label}] ${chart.solarDate} ${chart.gender}`)
+  const start = CLASS_TO_START[chart.fiveElementsClass]
+  const yearStem = chart.rawDates.chineseDate.yearly[0]
+  const isYangStem = STEMS.indexOf(yearStem) % 2 === 0
+  const forward = (isYangStem && chart.gender === '男') || (!isYangStem && chart.gender === '女')
+  const soulIdx = chart.palaces.findIndex((p) => p.earthlyBranch === chart.earthlyBranchOfSoulPalace)
+
+  // palaces[] 索引依地支順序遞增（寅卯辰…），順行 = 索引 +1
+  let rangesOk = true
+  for (let k = 0; k < 12; k++) {
+    const idx = (((soulIdx + (forward ? k : -k)) % 12) + 12) % 12
+    const expected = [start + 10 * k, start + 10 * k + 9]
+    const actual = chart.palaces[idx].decadal.range
+    if (actual[0] !== expected[0] || actual[1] !== expected[1]) {
+      console.error(`  FAIL: palaces[${idx}] 大限 ${actual.join('-')} ≠ 古法 ${expected.join('-')}`)
+      rangesOk = false
+      failures++
+    }
+  }
+  if (rangesOk) {
+    assert(true, `${yearStem}年${chart.gender}（${isYangStem ? '陽' : '陰'}${chart.gender}）${forward ? '順' : '逆'}行，${chart.fiveElementsClass} ${start} 歲起運，十二大限起訖皆合`)
+  }
+
+  // 大限四化：用各大限起始虛歲反查 horoscope，宮位命中且四化 = 宮干查表
+  const birthYear = chart.rawDates.lunarDate.lunarYear
+  let mutagenOk = true
+  for (const p of chart.palaces) {
+    const h = chart.horoscope(`${birthYear + p.decadal.range[0] - 1}-6-1`)
+    const expected = MUTAGEN_TABLE[p.decadal.heavenlyStem]
+    if (h.decadal.index !== p.index) {
+      console.error(`  FAIL: 虛歲 ${p.decadal.range[0]} 反查大限落 palaces[${h.decadal.index}]，應為 ${p.index}`)
+      mutagenOk = false
+      failures++
+    }
+    if (JSON.stringify(h.decadal.mutagen) !== JSON.stringify(expected)) {
+      console.error(`  FAIL: ${p.decadal.heavenlyStem}干大限四化 ${h.decadal.mutagen.join('、')} ≠ 表 ${expected.join('、')}`)
+      mutagenOk = false
+      failures++
+    }
+    if (h.decadal.palaceNames[h.decadal.index] !== '命宮') {
+      console.error(`  FAIL: 大限宮名未對齊（index 處應為命宮）`)
+      mutagenOk = false
+      failures++
+    }
+  }
+  if (mutagenOk) assert(true, '十二大限反查命中、大限四化皆與宮干四化表一致')
+}
+
+verifyDecadal('陽女逆行', astro.bySolar('1992-7-7', 8, '女', true, 'zh-TW')) // 壬申年 金四局，範例命盤
+verifyDecadal('陰男逆行', astro.bySolar('1990-1-1', 0, '男', true, 'zh-TW')) // 春節前生，農曆己巳年 水二局
+verifyDecadal('陽女逆行2', sample) // 庚辰年 木三局
+verifyDecadal('陽男順行', astro.bySolar('1984-6-1', 4, '男', true, 'zh-TW')) // 甲子年
+verifyDecadal('陰女順行', astro.bySolar('1995-8-8', 6, '女', true, 'zh-TW')) // 乙亥年
+
 // ---- 流月驗證：月干支依五虎遁（年干定寅月干），月支正月起寅 ----
 import('lunar-lite').then(({ lunar2solar }) => {
   console.log('\n[流月 五虎遁]')
@@ -141,6 +201,6 @@ import('lunar-lite').then(({ lunar2solar }) => {
     console.error(`\n${failures} 項驗證失敗`)
     process.exit(1)
   }
-  console.log('\n全部通過：命身宮、五行局、主星分布、四化、流年、流月皆與古法一致')
+  console.log('\n全部通過：命身宮、五行局、主星分布、四化、大限、流年、流月皆與古法一致')
 })
 
