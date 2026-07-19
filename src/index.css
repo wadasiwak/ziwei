@@ -1210,6 +1210,209 @@ button.secondary { color: var(--accent); }
   padding-top: 10px;
 }
 
+/* ---- 合盤比較 ---- */
+.chip-syn {
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.syn-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 6px 0;
+}
+
+.syn-picker label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.syn-picker select {
+  font: inherit;
+  background: var(--cell);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  max-width: 220px;
+}
+
+.syn-picker .syn-x {
+  align-self: end;
+  padding-bottom: 8px;
+  color: var(--text-dim);
+}
+
+.syn-picker .syn-hint {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 12px;
+  color: var(--mut-ji);
+}
+
+.synastry {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.synastry-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.synastry-head h2 {
+  margin: 0;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+.synastry-sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.syn-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.syn-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.syn-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.syn-card h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.syn-tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--soul);
+  border: 1px solid var(--accent-dim);
+  border-radius: 999px;
+  padding: 1px 9px;
+  margin-right: 8px;
+  vertical-align: 1px;
+}
+
+.syn-card dl {
+  margin: 0;
+  display: grid;
+  gap: 5px;
+  font-size: 13px;
+}
+
+.syn-card dl div {
+  display: flex;
+  gap: 8px;
+}
+
+.syn-card dt {
+  color: var(--text-dim);
+  flex-shrink: 0;
+  min-width: 60px;
+}
+
+.syn-card dd { margin: 0; }
+
+.syn-block {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.syn-block h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: var(--accent);
+}
+
+.syn-frame {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.syn-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.syn-side {
+  background: var(--cell);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.syn-side h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.syn-side p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.syn-side p:last-child { margin-bottom: 0; }
+
+.syn-side .borrow-note { margin-bottom: 8px; }
+
+.syn-bridge {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  background: var(--cell);
+  border-radius: 6px;
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+
+.syn-element p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.syn-relation {
+  color: var(--accent);
+  font-weight: 600;
+  margin: 0 2px;
+}
+
+.synastry .disclaimer { margin-top: 4px; }
+
 .app-footer {
   margin-top: 40px;
   text-align: center;
@@ -1368,6 +1571,21 @@ button.secondary { color: var(--accent); }
 
   .lib-card .lib-use { min-height: 36px; }
 
+  /* 合盤：並列卡改直疊、選盤器單欄好點按 */
+  .syn-summary,
+  .syn-pair { grid-template-columns: 1fr; }
+
+  .syn-actions { margin-left: 0; width: 100%; }
+  .syn-actions button { flex: 1; min-height: 40px; }
+
+  .chip-syn { min-height: 38px; }
+
+  .syn-picker label { flex: 1 1 100%; }
+  .syn-picker select { max-width: none; width: 100%; min-height: 44px; font-size: 16px; }
+  .syn-picker .syn-x { display: none; }
+  .syn-picker .chip-editor-actions { width: 100%; }
+  .syn-picker .chip-editor-actions button { flex: 1; min-height: 42px; }
+
   /* 已存命盤：chip 高度好點按 */
   .saved-chip .chip-load { padding: 8px 4px 8px 14px; }
   .saved-chip .chip-del { padding: 8px 12px 8px 8px; }
@@ -1440,4 +1658,9 @@ button.secondary { color: var(--accent); }
   .chart-center dl { font-size: 9px; }
 
   .hero-title { font-size: 18px; }
+
+  /* 合盤：窄幅手機收窄留白 */
+  .syn-block,
+  .syn-card { padding: 10px 12px; }
+  .synastry-head h2 { font-size: 18px; }
 }

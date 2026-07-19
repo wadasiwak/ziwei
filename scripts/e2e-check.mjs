@@ -345,8 +345,53 @@ try {
   if (await page7.$('.library')) fail('點「排我的盤」後文庫應關閉、回到排盤表單')
   await page7.close()
 
+  // 23. 合盤比較：存兩張盤 → 選甲乙 → 摘要卡／互看區／五行局／四化渲染 → 分享連結還原 → 離開
+  const page8 = await context.newPage()
+  await page8.goto(BASE_URL)
+  await page8.waitForSelector('.saved-chip', { timeout: 5000 }) // 先前測試已存「測試」
+  await page8.waitForSelector('.birth-form')
+  await page8.click('.demo-btn') // 第二張：範例命盤（金四局）
+  await page8.waitForSelector('.chart-grid', { timeout: 5000 })
+  await page8.click('.chip-save')
+  await page8.waitForFunction(() => document.querySelectorAll('.saved-chip').length >= 2)
+  await page8.click('.chip-syn')
+  await page8.waitForSelector('.syn-picker', { timeout: 3000 })
+  await page8.click('.syn-picker .primary') // 預設甲＝第一張、乙＝第二張
+  await page8.waitForSelector('.synastry', { timeout: 5000 })
+  const synText = await page8.textContent('.synastry')
+  if (!synText.includes('測試') || !synText.includes('範例命盤')) fail('合盤應顯示兩人名稱')
+  if ((await page8.$$('.syn-card')).length !== 2) fail('合盤應有兩張並列摘要卡')
+  if (!synText.includes('木三局') || !synText.includes('金四局')) fail('摘要卡應顯示兩人五行局')
+  const gazes = await page8.$$('.syn-gaze')
+  if (gazes.length !== 2) fail(`互看區應雙向各一，實得 ${gazes.length}`)
+  const gazeText = await page8.textContent('.syn-gaze')
+  if (!gazeText.includes('夫妻宮') || !gazeText.includes('命宮')) fail('互看區應含夫妻宮×命宮對照')
+  if (!gazeText.includes('在關係中')) fail('互看區應引用主星「在關係中的樣子」文案')
+  if ((await page8.$$('.syn-bridge')).length !== 2) fail('互看區雙向應各有一句組合橋接語')
+  const elText = await page8.textContent('.syn-element')
+  if (!elText.includes('金剋木')) fail(`五行局區塊應顯示木三局×金四局＝金剋木，實得: ${elText.slice(0, 60)}`)
+  const mutText = await page8.textContent('.syn-mutagen')
+  if (!mutText.includes('化祿') || !mutText.includes('化忌')) fail('生年四化區塊應顯示祿忌落點')
+  if (!synText.includes('娛樂')) fail('合盤頁應顯示免責聲明')
+  // 分享連結：兩組生日參數，開啟直接還原合盤
+  await page8.click('.syn-share')
+  const synShareUrl = await page8.evaluate(() => navigator.clipboard.readText())
+  if (!synShareUrl.includes('syn=1') || !synShareUrl.includes('d2=')) fail(`合盤分享連結應含兩組生日參數，實得: ${synShareUrl}`)
+  const page9 = await context.newPage()
+  await page9.goto(synShareUrl)
+  await page9.waitForSelector('.synastry', { timeout: 5000 })
+  const synText9 = await page9.textContent('.synastry')
+  if (!synText9.includes('木三局') || !synText9.includes('金四局')) fail('開啟合盤連結應直接還原同一組合盤')
+  if ((await page9.$$('.syn-gaze')).length !== 2) fail('合盤連結還原後互看區應完整渲染')
+  await page9.close()
+  // 離開合盤 → 回到一般視圖
+  await page8.click('.syn-close')
+  if (await page8.$('.synastry')) fail('離開合盤後應回到一般視圖')
+  await page8.waitForSelector('.saved-chip', { timeout: 3000 })
+  await page8.close()
+
   await browser.close()
-  console.log('e2e OK：排盤、解讀、存取、流年流月流日、今天快捷、大限、三方四正、雙星、格局、分享、AI prompt、範例命盤、小辭典、帶狀態分享、存圖、保存管理、解讀文庫 全部通過')
+  console.log('e2e OK：排盤、解讀、存取、流年流月流日、今天快捷、大限、三方四正、雙星、格局、分享、AI prompt、範例命盤、小辭典、帶狀態分享、存圖、保存管理、解讀文庫、合盤比較 全部通過')
 } finally {
   server.kill()
 }

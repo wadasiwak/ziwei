@@ -13,15 +13,38 @@ export type ViewState = {
   decadal: number | null
 }
 
+// 單人生日參數的寫入／讀取。suffix 供合盤第二人使用（d2、t2⋯⋯），單盤沿用原參數名不變。
+function setPersonParams(p: URLSearchParams, input: BirthInput, suffix: string) {
+  p.set(`d${suffix}`, input.date)
+  p.set(`t${suffix}`, String(input.timeIndex))
+  p.set(`g${suffix}`, input.gender)
+  if (input.calendar === 'lunar') p.set(`cal${suffix}`, 'lunar')
+  if (input.isLeapMonth) p.set(`leap${suffix}`, '1')
+  if (input.name && input.name !== '未命名') p.set(`n${suffix}`, input.name)
+}
+
+function getPersonParams(p: URLSearchParams, suffix: string): BirthInput | null {
+  const date = p.get(`d${suffix}`)
+  const t = p.get(`t${suffix}`)
+  const g = p.get(`g${suffix}`)
+  if (!date || t === null || (g !== '男' && g !== '女')) return null
+  if (!/^\d{4}-\d{1,2}-\d{1,2}$/.test(date)) return null
+  const timeIndex = Number(t)
+  if (!Number.isInteger(timeIndex) || timeIndex < 0 || timeIndex > 12) return null
+  return {
+    name: p.get(`n${suffix}`) ?? '未命名',
+    gender: g,
+    calendar: p.get(`cal${suffix}`) === 'lunar' ? 'lunar' : 'solar',
+    date,
+    timeIndex,
+    isLeapMonth: p.get(`leap${suffix}`) === '1',
+  }
+}
+
 // 生日參數 ↔ URL query，讓命盤可以用連結分享（資料只在網址裡，不經伺服器）。
 export function inputToParams(input: BirthInput, view?: ViewState): string {
   const p = new URLSearchParams()
-  p.set('d', input.date)
-  p.set('t', String(input.timeIndex))
-  p.set('g', input.gender)
-  if (input.calendar === 'lunar') p.set('cal', 'lunar')
-  if (input.isLeapMonth) p.set('leap', '1')
-  if (input.name && input.name !== '未命名') p.set('n', input.name)
+  setPersonParams(p, input, '')
   if (view) {
     if (view.palace) p.set('p', view.palace)
     if (view.year !== new Date().getFullYear()) p.set('y', String(view.year))
@@ -33,22 +56,7 @@ export function inputToParams(input: BirthInput, view?: ViewState): string {
 }
 
 export function paramsToInput(search: string): BirthInput | null {
-  const p = new URLSearchParams(search)
-  const date = p.get('d')
-  const t = p.get('t')
-  const g = p.get('g')
-  if (!date || t === null || (g !== '男' && g !== '女')) return null
-  if (!/^\d{4}-\d{1,2}-\d{1,2}$/.test(date)) return null
-  const timeIndex = Number(t)
-  if (!Number.isInteger(timeIndex) || timeIndex < 0 || timeIndex > 12) return null
-  return {
-    name: p.get('n') ?? '未命名',
-    gender: g,
-    calendar: p.get('cal') === 'lunar' ? 'lunar' : 'solar',
-    date,
-    timeIndex,
-    isLeapMonth: p.get('leap') === '1',
-  }
+  return getPersonParams(new URLSearchParams(search), '')
 }
 
 /** 從網址還原檢視狀態（宮位／流年／流月），無效值一律忽略 */
@@ -73,4 +81,27 @@ export function paramsToView(search: string): Partial<ViewState> {
 
 export function shareUrl(input: BirthInput, view?: ViewState): string {
   return `${location.origin}${location.pathname}?${inputToParams(input, view)}`
+}
+
+// ---- 合盤（雙人比較）：syn=1 ＋ 兩組生日參數（第二人加後綴 2） ----
+
+export function synastryToParams(a: BirthInput, b: BirthInput): string {
+  const p = new URLSearchParams()
+  p.set('syn', '1')
+  setPersonParams(p, a, '')
+  setPersonParams(p, b, '2')
+  return p.toString()
+}
+
+/** 從網址還原合盤：需 syn=1 且兩組生日參數皆有效，否則回 null（走一般單盤流程） */
+export function paramsToSynastry(search: string): { a: BirthInput; b: BirthInput } | null {
+  const p = new URLSearchParams(search)
+  if (p.get('syn') !== '1') return null
+  const a = getPersonParams(p, '')
+  const b = getPersonParams(p, '2')
+  return a && b ? { a, b } : null
+}
+
+export function synastryUrl(a: BirthInput, b: BirthInput): string {
+  return `${location.origin}${location.pathname}?${synastryToParams(a, b)}`
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { TIME_OPTIONS } from '../lib/chart'
+import { TIME_OPTIONS, type BirthInput } from '../lib/chart'
+import type { SavedChart } from '../lib/storage'
 import { useStore } from '../state'
 
 export default function SavedCharts() {
@@ -9,11 +10,15 @@ export default function SavedCharts() {
   const deleteSaved = useStore((s) => s.deleteSaved)
   const saveCurrent = useStore((s) => s.saveCurrent)
   const updateSaved = useStore((s) => s.updateSaved)
+  const setSynastry = useStore((s) => s.setSynastry)
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editNote, setEditNote] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [showSynPicker, setShowSynPicker] = useState(false)
+  const [synA, setSynA] = useState('')
+  const [synB, setSynB] = useState('')
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -66,6 +71,24 @@ export default function SavedCharts() {
     else if (result === 'saved') showToast('已保存 ✓ 下次開站直接點名字載入。')
   }
 
+  const openSynPicker = () => {
+    setShowSynPicker(true)
+    setEditingId(null)
+    setSynA(saved[0]?.id ?? '')
+    setSynB(saved[1]?.id ?? '')
+  }
+
+  const startSynastry = () => {
+    const a = saved.find((c) => c.id === synA)
+    const b = saved.find((c) => c.id === synB)
+    if (!a || !b || a.id === b.id) return
+    const strip = ({ id: _id, note: _note, ...rest }: SavedChart): BirthInput => rest
+    setSynastry({ a: strip(a), b: strip(b) })
+    setShowSynPicker(false)
+  }
+
+  const chipLabel = (c: SavedChart) => `${c.name}${c.note ? `（${c.note}）` : ''}・${c.date}`
+
   return (
     <div className="saved-charts-wrap">
       <div className="saved-charts">
@@ -93,7 +116,38 @@ export default function SavedCharts() {
         {input && !isCurrentSaved && (
           <button className="chip-save" onClick={onSave}>＋ 保存這張命盤</button>
         )}
+        {saved.length >= 2 && (
+          <button className="chip-syn" title="從已保存的命盤挑兩張，看看彼此的互動" onClick={openSynPicker}>
+            🔗 合盤比較
+          </button>
+        )}
       </div>
+      {showSynPicker && (
+        <div className="syn-picker">
+          <label>
+            甲方
+            <select value={synA} onChange={(e) => setSynA(e.target.value)}>
+              {saved.map((c) => (
+                <option key={c.id} value={c.id}>{chipLabel(c)}</option>
+              ))}
+            </select>
+          </label>
+          <span className="syn-x">×</span>
+          <label>
+            乙方
+            <select value={synB} onChange={(e) => setSynB(e.target.value)}>
+              {saved.map((c) => (
+                <option key={c.id} value={c.id}>{chipLabel(c)}</option>
+              ))}
+            </select>
+          </label>
+          <div className="chip-editor-actions">
+            <button className="primary" type="button" disabled={synA === synB} onClick={startSynastry}>開始比較</button>
+            <button type="button" onClick={() => setShowSynPicker(false)}>取消</button>
+          </div>
+          {synA === synB && <p className="syn-hint">請選兩張不同的命盤。</p>}
+        </div>
+      )}
       {editingId && (
         <div className="chip-editor">
           <label>

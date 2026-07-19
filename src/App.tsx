@@ -7,13 +7,14 @@ import Library from './components/Library'
 import PatternCard from './components/PatternCard'
 import ReadingPanel from './components/ReadingPanel'
 import SavedCharts from './components/SavedCharts'
+import SynastryView from './components/SynastryView'
 import YearlyPanel, { DayBar, DecadalBar, MonthBar, YearBar } from './components/YearlyPanel'
 import { computeChart, computeDaily, computeMonthly, computeYearly, listDecadals } from './lib/chart'
 import { isDemoInput } from './lib/demo'
 import { detectPatterns } from './lib/patterns'
 import { buildLlmPrompt } from './lib/prompt'
 import { makeChartCard, shareOrDownload } from './lib/shareCard'
-import { inputToParams, paramsToInput, paramsToView, shareUrl } from './lib/share'
+import { inputToParams, paramsToInput, paramsToSynastry, paramsToView, shareUrl, synastryToParams } from './lib/share'
 import { useStore } from './state'
 
 function useCopy(): [string | null, string | null, (text: string, label: string, toast: string) => void, (msg: string) => void] {
@@ -47,12 +48,19 @@ export default function App() {
   const setMonth = useStore((s) => s.setMonth)
   const setDay = useStore((s) => s.setDay)
   const setDecadal = useStore((s) => s.setDecadal)
+  const synastry = useStore((s) => s.synastry)
+  const setSynastry = useStore((s) => s.setSynastry)
   const [showForm, setShowForm] = useState(false)
   const [showLibrary, setShowLibrary] = useState(false)
   const [copied, toast, copy, showToast] = useCopy()
 
-  // 開站時從網址讀取分享的命盤參數與檢視狀態（宮位／流年／流月）
+  // 開站時從網址讀取分享的命盤參數與檢視狀態（宮位／流年／流月）；合盤連結（syn=1）優先
   useEffect(() => {
+    const syn = paramsToSynastry(location.search)
+    if (syn) {
+      setSynastry(syn)
+      return
+    }
     const fromUrl = paramsToInput(location.search)
     if (fromUrl) {
       setInput(fromUrl)
@@ -66,13 +74,18 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // 命盤或檢視狀態變動時同步到網址，直接複製網址列也能分享同一個視圖
+  // 命盤或檢視狀態變動時同步到網址，直接複製網址列也能分享同一個視圖；合盤模式寫入兩組生日參數
   useEffect(() => {
-    if (input) {
+    if (synastry) {
+      history.replaceState(null, '', `${location.pathname}?${synastryToParams(synastry.a, synastry.b)}`)
+    } else if (input) {
       const view = { palace: selectedPalace, year: selectedYear, month: selectedMonth, day: selectedDay, decadal: selectedDecadal }
       history.replaceState(null, '', `${location.pathname}?${inputToParams(input, view)}`)
+    } else {
+      // 離開合盤且沒有單盤時清掉殘留參數，避免重整又跳回合盤
+      history.replaceState(null, '', location.pathname)
     }
-  }, [input, selectedPalace, selectedYear, selectedMonth, selectedDay, selectedDecadal])
+  }, [input, synastry, selectedPalace, selectedYear, selectedMonth, selectedDay, selectedDecadal])
 
   const chart = useMemo(() => {
     if (!input) return null
@@ -164,7 +177,7 @@ export default function App() {
           紫微斗數排盤
         </h1>
         <div className="header-actions">
-          {chart && input && !showLibrary && (
+          {chart && input && !showLibrary && !synastry && (
             <>
               <button
                 className="secondary"
@@ -214,14 +227,16 @@ export default function App() {
         />
       )}
 
-      {!showLibrary && (<>
+      {!showLibrary && synastry && <SynastryView />}
+
+      {!showLibrary && !synastry && (<>
       <SavedCharts />
 
       {!chart && (
         <div className="hero">
           <p className="hero-title">輸入出生年月日時，排出完整的紫微斗數命盤</p>
           <p className="hero-sub">
-            十二宮星曜與四化・14 主星 × 12 宮白話解讀・格局判斷・大限流年流月流日・可保存多人命盤與分享連結
+            十二宮星曜與四化・14 主星 × 12 宮白話解讀・格局判斷・大限流年流月流日・保存多人命盤與雙人合盤比較
           </p>
         </div>
       )}

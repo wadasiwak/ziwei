@@ -106,6 +106,61 @@ if (dayEntries.length !== 12 || dayBad) {
 }
 console.log('OK: 12 daily palace entries covered')
 
+// 合盤：14 主星「在關係中的樣子」各一則（每則 80–120 字）
+const loveSrc = readFileSync(new URL('../src/content/starInLove.ts', import.meta.url), 'utf8')
+const loveEntries = JSON.parse(loveSrc.slice(loveSrc.indexOf('= [') + 2, loveSrc.lastIndexOf(']') + 1))
+const loveSeen = new Set()
+let loveBad = 0
+for (const e of loveEntries) {
+  loveSeen.add(e.star)
+  if (!e.title || !e.text || e.text.length < 80 || e.text.length > 120) {
+    console.error(`bad love entry: ${e.star}（${e.text?.length ?? 0} 字）`)
+    loveBad++
+  }
+}
+for (const s of STARS) {
+  if (!loveSeen.has(s)) {
+    console.error(`missing love: ${s}`)
+    loveBad++
+  }
+}
+if (loveEntries.length !== 14 || loveBad) {
+  console.error(`FAIL love: ${loveEntries.length} entries, ${loveBad} problems`)
+  process.exit(1)
+}
+console.log('OK: 14 star-in-love entries covered')
+
+// 合盤：五行局生剋 5×5 共 25 則（每則 30–50 字，需含 {A}、{B} 佔位供代換名字）
+const ELEMENTS = ['水', '木', '金', '土', '火']
+const elSrc = readFileSync(new URL('../src/content/elementSynastry.ts', import.meta.url), 'utf8')
+const elEntries = JSON.parse(elSrc.slice(elSrc.indexOf('= [') + 2, elSrc.lastIndexOf(']') + 1))
+const elSeen = new Set()
+let elBad = 0
+for (const e of elEntries) {
+  elSeen.add(`${e.a}|${e.b}`)
+  if (!e.relation || !e.text || e.text.length < 30 || e.text.length > 50) {
+    console.error(`bad element entry: ${e.a}|${e.b}（${e.text?.length ?? 0} 字）`)
+    elBad++
+  }
+  if (e.text && (!e.text.includes('{A}') || !e.text.includes('{B}'))) {
+    console.error(`element entry missing {A}/{B}: ${e.a}|${e.b}`)
+    elBad++
+  }
+}
+for (const x of ELEMENTS) {
+  for (const y of ELEMENTS) {
+    if (!elSeen.has(`${x}|${y}`)) {
+      console.error(`missing element pair: ${x}|${y}`)
+      elBad++
+    }
+  }
+}
+if (elEntries.length !== 25 || elBad) {
+  console.error(`FAIL element: ${elEntries.length} entries, ${elBad} problems`)
+  process.exit(1)
+}
+console.log('OK: 25 element synastry entries covered')
+
 // 雙星同宮 24 組（實際會同宮的組合固定就是這 24 種）
 const PAIRS = [
   '紫微天府', '紫微貪狼', '紫微天相', '紫微七殺', '紫微破軍',
