@@ -82,6 +82,30 @@ if (dentries.length !== 12 || dbad) {
 }
 console.log('OK: 12 decadal palace entries covered')
 
+// 流日命宮落本命十二宮 12 則（每則 40–80 字的輕量「今日盤」內容）
+const daySrc = readFileSync(new URL('../src/content/dailyPalaces.ts', import.meta.url), 'utf8')
+const dayEntries = JSON.parse(daySrc.slice(daySrc.indexOf('= [') + 2, daySrc.lastIndexOf(']') + 1))
+const daySeen = new Set()
+let dayBad = 0
+for (const e of dayEntries) {
+  daySeen.add(e.palace)
+  if (!e.title || !e.text || e.text.length < 40 || e.text.length > 80) {
+    console.error(`bad daily entry: ${e.palace}（${e.text?.length ?? 0} 字）`)
+    dayBad++
+  }
+}
+for (const p of PALACES) {
+  if (!daySeen.has(p)) {
+    console.error(`missing daily: ${p}`)
+    dayBad++
+  }
+}
+if (dayEntries.length !== 12 || dayBad) {
+  console.error(`FAIL daily: ${dayEntries.length} entries, ${dayBad} problems`)
+  process.exit(1)
+}
+console.log('OK: 12 daily palace entries covered')
+
 // 雙星同宮 24 組（實際會同宮的組合固定就是這 24 種）
 const PAIRS = [
   '紫微天府', '紫微貪狼', '紫微天相', '紫微七殺', '紫微破軍',

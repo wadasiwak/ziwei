@@ -1,6 +1,6 @@
 import { astro } from 'iztro'
 import type FunctionalAstrolabe from 'iztro/lib/astro/FunctionalAstrolabe'
-import { lunar2solar } from 'lunar-lite'
+import { getTotalDaysOfLunarMonth, lunar2solar, solar2lunar } from 'lunar-lite'
 
 export type BirthInput = {
   name: string
@@ -100,6 +100,59 @@ export function computeMonthly(chart: FunctionalAstrolabe, year: number, lunarMo
     palaceNames: h.monthly.palaceNames,
     mutagenStars: h.monthly.mutagen,
   }
+}
+
+export const LUNAR_DAY_NAMES = [
+  '初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
+  '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
+  '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十',
+]
+
+export type DailyInfo = {
+  /** 農曆日 1–30 */
+  day: number
+  /** 流日日柱干支 */
+  stem: string
+  branch: string
+  /** 流日命宮在 palaces[] 的索引 */
+  soulPalaceIndex: number
+  /** 十二流日宮名，對齊 palaces[] */
+  palaceNames: string[]
+  /** 流日四化星名，依 [祿, 權, 科, 忌] 順序 */
+  mutagenStars: string[]
+  /** 對應的國曆日期 YYYY-M-D */
+  solarDate: string
+}
+
+/** 某流年（西元年）農曆某月的天數（29 或 30），供流日選擇列使用 */
+export function lunarMonthDays(year: number, lunarMonth: number): number {
+  return getTotalDaysOfLunarMonth(lunar2solar(`${year}-${lunarMonth}-1`, false).toString())
+}
+
+// 取某流年農曆某月某日的流日資料。與流月同一套模型：不區分閏月（閏月以本月論）。
+export function computeDaily(chart: FunctionalAstrolabe, year: number, lunarMonth: number, lunarDay: number): DailyInfo {
+  if (lunarDay < 1 || lunarDay > lunarMonthDays(year, lunarMonth)) {
+    throw new Error(`invalid lunar day: ${year}-${lunarMonth}-${lunarDay}`)
+  }
+  const solarDate = lunar2solar(`${year}-${lunarMonth}-${lunarDay}`, false).toString()
+  const h = chart.horoscope(solarDate)
+  return {
+    day: lunarDay,
+    stem: h.daily.heavenlyStem,
+    branch: h.daily.earthlyBranch,
+    soulPalaceIndex: h.daily.index,
+    palaceNames: h.daily.palaceNames,
+    mutagenStars: h.daily.mutagen,
+    solarDate,
+  }
+}
+
+/** 今天的農曆年月日（年為農曆年：春節前的一月屬前一農曆年，可直接餵給流年／流月／流日） */
+export function todayLunar(): { year: number; month: number; day: number; isLeap: boolean } {
+  const now = new Date()
+  const l = solar2lunar(`${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`)
+  // 注意：流月／流日模型不分閏月，閏月期間以同名正月份近似（isLeap 供介面提示用）
+  return { year: l.lunarYear, month: l.lunarMonth, day: l.lunarDay, isLeap: l.isLeap }
 }
 
 /** 盤面上顯示用的流年宮名縮寫 */

@@ -1,7 +1,15 @@
 // 端到端測試：輸入生日 → 排盤 → 點宮位看解讀 → 存命盤 → 重整後載入。
 // 需先 npm run build；本腳本自行啟動 vite preview (port 5200)。
 import { spawn } from 'node:child_process'
+import { getTotalDaysOfLunarMonth, lunar2solar, solar2lunar } from 'lunar-lite'
 import { chromium } from 'playwright'
+
+const LUNAR_MONTH_NAMES = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '冬月', '臘月']
+const LUNAR_DAY_NAMES = [
+  '初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
+  '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
+  '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十',
+]
 
 const PORT = 5210
 const BASE_URL = `http://localhost:${PORT}/`
@@ -220,6 +228,56 @@ try {
   await page3.click('.decadal-bar button.active')
   if (await page3.$('.decadal-panel')) fail('再點一次大限應取消疊加')
 
+  // 19b. 流日：此時 page3 為流年 1995、流月五月 → 流日列天數應與農曆該月一致
+  const expectedDays = getTotalDaysOfLunarMonth(lunar2solar('1995-5-1', false).toString())
+  const dayBtns = await page3.$$('.day-bar button')
+  if (dayBtns.length !== expectedDays) fail(`流日列應有 ${expectedDays} 天（農曆 1995 年五月），實得 ${dayBtns.length}`)
+  await page3.click('.day-bar button:nth-of-type(3)') // 初三
+  await page3.waitForSelector('.chart-grid .yearly-tag.daily-soul', { timeout: 3000 })
+  const dailySouls = await page3.$$('.chart-grid .yearly-tag.daily-soul')
+  if (dailySouls.length !== 1) fail(`盤面應恰有一個流日命宮標記，實得 ${dailySouls.length}`)
+  if ((await page3.$$('.chart-grid .mutagen.day')).length === 0) fail('盤面應標記流日四化')
+  const dailyBlock = await page3.textContent('.daily-block')
+  if (!dailyBlock.includes('今日盤') || !dailyBlock.includes('流日命宮在本命')) fail(`解讀面板應有今日盤簡述，實得: ${dailyBlock.slice(0, 60)}`)
+  const dayInfo = await page3.textContent('.day-bar .day-info')
+  const expectedSolar = lunar2solar('1995-5-3', false).toString()
+  if (!dayInfo.includes(`日・國曆 ${expectedSolar}`)) fail(`流日列應顯示日柱與對應國曆（五月初三＝${expectedSolar}），實得: ${dayInfo}`)
+  // 分享連結帶流日（dd），開啟後還原
+  await page3.click('.header-actions button:first-child')
+  const dayUrl = await page3.evaluate(() => navigator.clipboard.readText())
+  if (!dayUrl.includes('dd=3')) fail(`分享連結應帶流日參數，實得: ${dayUrl}`)
+  const page6 = await context.newPage()
+  await page6.goto(dayUrl)
+  await page6.waitForSelector('.daily-block', { timeout: 5000 })
+  const restoredDay = await page6.textContent('.day-bar button.active')
+  if (!restoredDay.includes('初三')) fail(`開啟連結應還原選中的流日，實得: ${restoredDay}`)
+  await page6.close()
+  // 再點一次取消流日層
+  await page3.click('.day-bar button.active')
+  if (await page3.$('.daily-block')) fail('再點一次流日應取消疊加')
+
+  // 19c. 「今天」快捷鍵：一鍵跳到今日流年／流月／流日
+  const now = new Date()
+  const tl = solar2lunar(`${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`)
+  await page3.click('.year-bar .today-btn')
+  await page3.waitForSelector('.daily-block', { timeout: 3000 })
+  const todayYearLabel = await page3.textContent('.year-bar .year-label')
+  if (!todayYearLabel.includes(String(tl.lunarYear))) fail(`今天快捷鍵應跳到流年 ${tl.lunarYear}，實得: ${todayYearLabel}`)
+  const todayMonth = await page3.textContent('.month-bar button.active')
+  if (!todayMonth.includes(LUNAR_MONTH_NAMES[tl.lunarMonth - 1].replace('月', ''))) {
+    fail(`今天快捷鍵應選中${LUNAR_MONTH_NAMES[tl.lunarMonth - 1]}，實得: ${todayMonth}`)
+  }
+  const todayDay = await page3.textContent('.day-bar button.active')
+  if (!todayDay.includes(LUNAR_DAY_NAMES[tl.lunarDay - 1])) fail(`今天快捷鍵應選中${LUNAR_DAY_NAMES[tl.lunarDay - 1]}，實得: ${todayDay}`)
+  if (!tl.isLeap) {
+    const nowMark = await page3.textContent('.day-bar button.now')
+    if (!nowMark.includes(LUNAR_DAY_NAMES[tl.lunarDay - 1])) fail('流日列應在今天的日子有底線標示')
+  }
+  const todaySolar = await page3.textContent('.day-bar .day-info')
+  if (!tl.isLeap && !todaySolar.includes(`國曆 ${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`)) {
+    fail(`今天快捷鍵後流日列應顯示今天的國曆日期，實得: ${todaySolar}`)
+  }
+
   // 20. 存成圖片：桌機應觸發 PNG 下載
   const [download] = await Promise.all([
     page3.waitForEvent('download', { timeout: 8000 }),
@@ -245,8 +303,50 @@ try {
   await page3.waitForFunction((n) => document.querySelectorAll('.saved-chip').length === n, chipsBefore)
   await page3.close()
 
+  // 22. 解讀文庫：不用排盤即可瀏覽、搜尋、導流回排盤表單
+  const page7 = await context.newPage()
+  await page7.goto(BASE_URL)
+  await page7.waitForSelector('.lib-btn', { timeout: 5000 })
+  await page7.click('.lib-btn')
+  await page7.waitForSelector('.library', { timeout: 3000 })
+  if (await page7.$('.birth-form')) fail('文庫開啟時應隱藏排盤表單')
+  const chips = await page7.$$('.star-chips button')
+  if (chips.length !== 14) fail(`文庫應有 14 顆主星 chip，實得 ${chips.length}`)
+  let cards = await page7.$$('.lib-card')
+  if (cards.length !== 12) fail(`預設主星（紫微）應列 12 宮解讀，實得 ${cards.length}`)
+  const firstCard = await page7.textContent('.lib-card:first-of-type')
+  if (!firstCard.includes('紫微・命宮') || !firstCard.includes('帝座')) fail(`第一張卡應為紫微・命宮，實得: ${firstCard.slice(0, 40)}`)
+  // 換一顆星
+  await page7.click('.star-chips button:nth-of-type(2)')
+  const jiCard = await page7.textContent('.lib-card:first-of-type')
+  if (!jiCard.includes('天機・命宮')) fail(`點天機後應顯示天機的 12 宮，實得: ${jiCard.slice(0, 40)}`)
+  // 雙星同宮與格局分區
+  await page7.click('.lib-tabs button:nth-of-type(2)')
+  cards = await page7.$$('.lib-card')
+  if (cards.length !== 24) fail(`雙星同宮分區應有 24 則，實得 ${cards.length}`)
+  await page7.click('.lib-tabs button:nth-of-type(3)')
+  cards = await page7.$$('.lib-card')
+  if (cards.length !== 9) fail(`格局分區應有 9 則，實得 ${cards.length}`)
+  const patternCard = await page7.textContent('.lib-card:first-of-type')
+  if (!patternCard.includes('紫府同宮')) fail(`格局分區應含紫府同宮，實得: ${patternCard.slice(0, 40)}`)
+  // 搜尋：宮名
+  await page7.fill('.library-search', '夫妻')
+  await page7.waitForSelector('.lib-results', { timeout: 3000 })
+  let count = await page7.textContent('.lib-count')
+  if (!count.includes('主星×宮位 14')) fail(`搜尋「夫妻」應命中 14 則主星×宮位，實得: ${count}`)
+  // 搜尋：內文關鍵字（跨分區）
+  await page7.fill('.library-search', '帝座')
+  count = await page7.textContent('.lib-count')
+  const hitCard = await page7.textContent('.lib-results .lib-card:first-of-type')
+  if (!hitCard.includes('紫微')) fail(`搜尋「帝座」應命中紫微的解讀，實得: ${hitCard.slice(0, 40)}`)
+  // 導流：從任一則回到排盤表單
+  await page7.click('.lib-results .lib-card:first-of-type .lib-use')
+  await page7.waitForSelector('.birth-form', { timeout: 3000 })
+  if (await page7.$('.library')) fail('點「排我的盤」後文庫應關閉、回到排盤表單')
+  await page7.close()
+
   await browser.close()
-  console.log('e2e OK：排盤、解讀、存取、流年流月、大限、三方四正、雙星、格局、分享、AI prompt、範例命盤、小辭典、帶狀態分享、存圖、保存管理 全部通過')
+  console.log('e2e OK：排盤、解讀、存取、流年流月流日、今天快捷、大限、三方四正、雙星、格局、分享、AI prompt、範例命盤、小辭典、帶狀態分享、存圖、保存管理、解讀文庫 全部通過')
 } finally {
   server.kill()
 }

@@ -7,6 +7,8 @@ export type ViewState = {
   palace: string | null
   year: number
   month: number | null
+  /** 農曆日 1–30（需搭配 month） */
+  day: number | null
   /** 選中的大限（大限宮在 palaces[] 的索引 0–11） */
   decadal: number | null
 }
@@ -24,7 +26,8 @@ export function inputToParams(input: BirthInput, view?: ViewState): string {
     if (view.palace) p.set('p', view.palace)
     if (view.year !== new Date().getFullYear()) p.set('y', String(view.year))
     if (view.month !== null) p.set('m', String(view.month))
-    if (view.decadal !== null) p.set('dl', String(view.decadal)) // d 已被生日佔用，大限用 dl
+    if (view.month !== null && view.day !== null) p.set('dd', String(view.day)) // d 已被生日佔用，流日用 dd
+    if (view.decadal !== null) p.set('dl', String(view.decadal)) // 大限用 dl
   }
   return p.toString()
 }
@@ -58,6 +61,8 @@ export function paramsToView(search: string): Partial<ViewState> {
   if (Number.isInteger(y) && y >= 1900 && y <= 2200) view.year = y
   const m = Number(p.get('m'))
   if (Number.isInteger(m) && m >= 1 && m <= 12) view.month = m
+  const dd = Number(p.get('dd'))
+  if (view.month !== undefined && Number.isInteger(dd) && dd >= 1 && dd <= 30) view.day = dd
   const dl = p.get('dl')
   if (dl !== null) {
     const i = Number(dl)

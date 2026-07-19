@@ -8,6 +8,8 @@ type State = {
   selectedYear: number
   /** 農曆月 1–12，null 表示不看流月 */
   selectedMonth: number | null
+  /** 農曆日 1–30，null 表示不看流日（需先選流月） */
+  selectedDay: number | null
   /** 選中的大限（以大限宮在 palaces[] 的索引表示），null 表示不看大限 */
   selectedDecadal: number | null
   saved: SavedChart[]
@@ -15,6 +17,7 @@ type State = {
   selectPalace: (name: string | null) => void
   setYear: (year: number) => void
   setMonth: (month: number | null) => void
+  setDay: (day: number | null) => void
   setDecadal: (index: number | null) => void
   /** 回傳 'saved' 或 'duplicate'（已保存過同一張盤） */
   saveCurrent: () => 'saved' | 'duplicate' | 'noop'
@@ -36,6 +39,7 @@ export const useStore = create<State>((set, get) => ({
   selectedPalace: null,
   selectedYear: new Date().getFullYear(),
   selectedMonth: null,
+  selectedDay: null,
   selectedDecadal: null,
   saved: loadCharts(),
 
@@ -44,7 +48,10 @@ export const useStore = create<State>((set, get) => ({
 
   setYear: (year) => set({ selectedYear: year }),
 
-  setMonth: (month) => set({ selectedMonth: month }),
+  // 換流月時流日歸零（各月天數不同，舊的日序無意義）
+  setMonth: (month) => set({ selectedMonth: month, selectedDay: null }),
+
+  setDay: (day) => set({ selectedDay: day }),
 
   setDecadal: (index) => set({ selectedDecadal: index }),
 

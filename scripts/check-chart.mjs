@@ -180,7 +180,7 @@ verifyDecadal('陽男順行', astro.bySolar('1984-6-1', 4, '男', true, 'zh-TW')
 verifyDecadal('陰女順行', astro.bySolar('1995-8-8', 6, '女', true, 'zh-TW')) // 乙亥年
 
 // ---- 流月驗證：月干支依五虎遁（年干定寅月干），月支正月起寅 ----
-import('lunar-lite').then(({ lunar2solar }) => {
+import('lunar-lite').then(({ lunar2solar, solar2lunar, getTotalDaysOfLunarMonth }) => {
   console.log('\n[流月 五虎遁]')
   // 五虎遁：甲己→丙寅、乙庚→戊寅、丙辛→庚寅、丁壬→壬寅、戊癸→甲寅
   const TIGER = { 甲: '丙', 己: '丙', 乙: '戊', 庚: '戊', 丙: '庚', 辛: '庚', 丁: '壬', 壬: '壬', 戊: '甲', 癸: '甲' }
@@ -197,10 +197,69 @@ import('lunar-lite').then(({ lunar2solar }) => {
     )
     assert(h.monthly.palaceNames[h.monthly.index] === '命宮', `流月宮名對齊（index 處為命宮）`)
   }
+
+  // ---- 流日驗證 ----
+  console.log('\n[流日]')
+
+  // 農曆日期外部對照：農曆新年是可獨立查證的事實（2025-1-29 乙巳年初一、2026-2-17 丙午年初一）
+  for (const [solar, ly] of [['2025-1-29', 2025], ['2026-2-17', 2026]]) {
+    const l = solar2lunar(solar)
+    assert(
+      l.lunarYear === ly && l.lunarMonth === 1 && l.lunarDay === 1 && !l.isLeap,
+      `${solar} = 農曆 ${ly} 年正月初一（春節外部對照）`,
+    )
+  }
+
+  // 日柱干支：用 JDN 公式獨立驗算（外部錨點：1949-10-01 為甲子日）
+  const jdn = (y, mo, d) => {
+    const a = Math.floor((14 - mo) / 12), yy = y + 4800 - a, mm = mo + 12 * a - 3
+    return d + Math.floor((153 * mm + 2) / 5) + 365 * yy + Math.floor(yy / 4) - Math.floor(yy / 100) + Math.floor(yy / 400) - 32045
+  }
+  const jdnAnchor = jdn(1949, 10, 1) // 甲子 = 0
+  const dayGanzhi = (y, mo, d) => {
+    const i = (((jdn(y, mo, d) - jdnAnchor) % 60) + 60) % 60
+    return STEMS[i % 10] + BRANCHES[i % 12]
+  }
+
+  // 流日規則：流日命宮起流月命宮（初一），順行一日一宮；流日四化 = 日干四化
+  const dayCases = [
+    { year: 2026, month: 6, days: [1, 2, 7, 15, getTotalDaysOfLunarMonth(lunar2solar('2026-6-1', false).toString())] },
+    { year: 2025, month: 1, days: [1, 10, 29] },
+  ]
+  for (const { year: y, month: mo, days } of dayCases) {
+    for (const d of days) {
+      const solarDate = lunar2solar(`${y}-${mo}-${d}`, false).toString()
+      const h = sample.horoscope(solarDate)
+      const [sy, sm, sd] = solarDate.split('-').map(Number)
+      const expectedGz = dayGanzhi(sy, sm, sd)
+      const gz = h.daily.heavenlyStem + h.daily.earthlyBranch
+      assert(gz === expectedGz, `農曆 ${y}-${mo}-${d}（國曆 ${solarDate}）日柱 ${gz} = JDN 公式 ${expectedGz}`)
+      assert(
+        h.daily.index === (h.monthly.index + d - 1) % 12,
+        `流日命宮 palaces[${h.daily.index}] = 流月命宮起初一順行（${(h.monthly.index + d - 1) % 12}）`,
+      )
+      assert(h.daily.palaceNames[h.daily.index] === '命宮', '流日宮名對齊（index 處為命宮）')
+      assert(
+        JSON.stringify(h.daily.mutagen) === JSON.stringify(MUTAGEN_TABLE[gz[0]]),
+        `${gz[0]}日流日四化 ${h.daily.mutagen.join('、')}`,
+      )
+    }
+  }
+
+  // 「今天」抽驗：今天的農曆日換回國曆應等於今天，且 iztro 流日日柱 = JDN 公式
+  const now = new Date()
+  const todayStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`
+  const tl = solar2lunar(todayStr)
+  const roundtrip = lunar2solar(`${tl.lunarYear}-${tl.lunarMonth}-${tl.lunarDay}`, tl.isLeap).toString()
+  assert(roundtrip === todayStr, `今天 ${todayStr} → 農曆 ${tl.lunarYear}-${tl.lunarMonth}-${tl.lunarDay}${tl.isLeap ? '(閏)' : ''} → 換回 ${roundtrip}`)
+  const hToday = sample.horoscope(todayStr)
+  const todayGz = dayGanzhi(now.getFullYear(), now.getMonth() + 1, now.getDate())
+  assert(hToday.daily.heavenlyStem + hToday.daily.earthlyBranch === todayGz, `今天日柱 ${hToday.daily.heavenlyStem}${hToday.daily.earthlyBranch} = JDN 公式 ${todayGz}`)
+
   if (failures) {
     console.error(`\n${failures} 項驗證失敗`)
     process.exit(1)
   }
-  console.log('\n全部通過：命身宮、五行局、主星分布、四化、大限、流年、流月皆與古法一致')
+  console.log('\n全部通過：命身宮、五行局、主星分布、四化、大限、流年、流月、流日皆與古法一致')
 })
 

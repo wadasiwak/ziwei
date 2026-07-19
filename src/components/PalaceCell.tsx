@@ -4,7 +4,7 @@ import { brightnessNote } from '../content/stars'
 
 const MUTAGEN_CLASS: Record<string, string> = { 祿: 'mut-lu', 權: 'mut-quan', 科: 'mut-ke', 忌: 'mut-ji' }
 
-function Star({ star, kind, yearlyMutagen, decadalMutagen }: { star: FunctionalStar; kind: 'major' | 'minor' | 'adj'; yearlyMutagen?: string; decadalMutagen?: string }) {
+function Star({ star, kind, yearlyMutagen, decadalMutagen, dailyMutagen }: { star: FunctionalStar; kind: 'major' | 'minor' | 'adj'; yearlyMutagen?: string; decadalMutagen?: string; dailyMutagen?: string }) {
   return (
     <span className={`star star-${kind}`}>
       {star.name}
@@ -14,6 +14,7 @@ function Star({ star, kind, yearlyMutagen, decadalMutagen }: { star: FunctionalS
       {star.mutagen ? <b className={`mutagen ${MUTAGEN_CLASS[star.mutagen] ?? ''}`}>{star.mutagen}</b> : null}
       {decadalMutagen ? <b className={`mutagen dec ${MUTAGEN_CLASS[decadalMutagen] ?? ''}`}>{decadalMutagen}</b> : null}
       {yearlyMutagen ? <b className={`mutagen flow ${MUTAGEN_CLASS[yearlyMutagen] ?? ''}`}>{yearlyMutagen}</b> : null}
+      {dailyMutagen ? <b className={`mutagen day ${MUTAGEN_CLASS[dailyMutagen] ?? ''}`}>{dailyMutagen}</b> : null}
     </span>
   )
 }
@@ -28,8 +29,10 @@ export default function PalaceCell({
   isMonthlySoul,
   decadalName,
   isDecadalSoul,
+  isDailySoul,
   yearlyMutagenOf,
   decadalMutagenOf,
+  dailyMutagenOf,
 }: {
   palace: IFunctionalPalace
   selected: boolean
@@ -43,10 +46,14 @@ export default function PalaceCell({
   /** 該宮的大限宮名縮寫（如「大命」），null 表示不顯示大限層 */
   decadalName: string | null
   isDecadalSoul: boolean
+  /** 是否為流日命宮（流日層克制：只標日命，不標十二流日宮名） */
+  isDailySoul: boolean
   /** 星名 → 流年四化（祿權科忌），無則 undefined */
   yearlyMutagenOf: (starName: string) => string | undefined
   /** 星名 → 大限四化（祿權科忌），無則 undefined */
   decadalMutagenOf: (starName: string) => string | undefined
+  /** 星名 → 流日四化（祿權科忌），無則 undefined */
+  dailyMutagenOf: (starName: string) => string | undefined
 }) {
   return (
     <button
@@ -57,13 +64,13 @@ export default function PalaceCell({
       <div className="palace-stars">
         <div className="majors">
           {palace.majorStars.map((s) => (
-            <Star key={s.name} star={s} kind="major" yearlyMutagen={yearlyMutagenOf(s.name)} decadalMutagen={decadalMutagenOf(s.name)} />
+            <Star key={s.name} star={s} kind="major" yearlyMutagen={yearlyMutagenOf(s.name)} decadalMutagen={decadalMutagenOf(s.name)} dailyMutagen={dailyMutagenOf(s.name)} />
           ))}
           {palace.majorStars.length === 0 && <span className="empty-palace">空宮</span>}
         </div>
         <div className="minors">
           {palace.minorStars.map((s) => (
-            <Star key={s.name} star={s} kind="minor" yearlyMutagen={yearlyMutagenOf(s.name)} decadalMutagen={decadalMutagenOf(s.name)} />
+            <Star key={s.name} star={s} kind="minor" yearlyMutagen={yearlyMutagenOf(s.name)} decadalMutagen={decadalMutagenOf(s.name)} dailyMutagen={dailyMutagenOf(s.name)} />
           ))}
         </div>
         <div className="adjs">
@@ -79,6 +86,7 @@ export default function PalaceCell({
           {decadalName && <em className={`yearly-tag decadal-tag ${isDecadalSoul ? 'decadal-soul' : ''}`}>{decadalName}</em>}
           {yearlyName && <em className={`yearly-tag ${isYearlySoul ? 'yearly-soul' : ''}`}>{yearlyName}</em>}
           {isMonthlySoul && <em className="yearly-tag monthly-soul">月命</em>}
+          {isDailySoul && <em className="yearly-tag daily-soul">日命</em>}
         </span>
         <span className="palace-meta">
           <span className="decadal">{palace.decadal.range[0]}–{palace.decadal.range[1]}</span>

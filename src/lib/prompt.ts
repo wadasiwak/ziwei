@@ -1,5 +1,5 @@
 import type FunctionalAstrolabe from 'iztro/lib/astro/FunctionalAstrolabe'
-import { LUNAR_MONTH_NAMES, type BirthInput, type MonthlyInfo, type YearlyInfo } from './chart'
+import { LUNAR_DAY_NAMES, LUNAR_MONTH_NAMES, type BirthInput, type DailyInfo, type MonthlyInfo, type YearlyInfo } from './chart'
 
 const MUTAGEN_ORDER = ['祿', '權', '科', '忌']
 
@@ -9,6 +9,7 @@ export function buildLlmPrompt(
   input: BirthInput,
   yearly: YearlyInfo | null,
   monthly: MonthlyInfo | null = null,
+  daily: DailyInfo | null = null,
 ): string {
   const lines: string[] = []
   lines.push('你是一位資深紫微斗數老師。以下是一張完整命盤資料，請給出綜合解讀。')
@@ -44,6 +45,11 @@ export function buildLlmPrompt(
     if (monthly) {
       lines.push(
         `${LUNAR_MONTH_NAMES[monthly.month - 1]}（${monthly.stem}${monthly.branch}月）流月：流月命宮在本命${chart.palaces[monthly.soulPalaceIndex].name}，流月四化 ${monthly.mutagenStars.map((s, i) => `${s}化${MUTAGEN_ORDER[i]}`).join('、')}`,
+      )
+    }
+    if (monthly && daily) {
+      lines.push(
+        `${LUNAR_DAY_NAMES[daily.day - 1]}（${daily.stem}${daily.branch}日，國曆 ${daily.solarDate}）流日：流日命宮在本命${chart.palaces[daily.soulPalaceIndex].name}，流日四化 ${daily.mutagenStars.map((s, i) => `${s}化${MUTAGEN_ORDER[i]}`).join('、')}`,
       )
     }
   }

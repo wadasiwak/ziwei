@@ -15,6 +15,7 @@
   --mut-ji: #ff7a7a;
   --dec: #4dd0cf; /* 大限層：青色系，與流年（金）、流月（藍）區分 */
   --dec-dim: #37918f;
+  --day: #e693c4; /* 流日層：粉色系，第四個色系，樣式刻意最輕 */
   font-family: 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', system-ui, sans-serif;
   color-scheme: dark;
 }
@@ -696,6 +697,50 @@ button.secondary { color: var(--accent); }
   margin-left: 4px;
 }
 
+/* ---- 流日選擇列 ---- */
+.day-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.day-bar-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-right: 4px;
+}
+
+.day-bar button {
+  padding: 2px 6px;
+  font-size: 11px;
+  border-radius: 6px;
+  color: var(--text-dim);
+}
+
+/* 今天：底線標示（同大限列的 now 慣例） */
+.day-bar button.now { box-shadow: inset 0 -2px 0 var(--day); color: var(--text); }
+
+.day-bar button.active {
+  background: var(--day);
+  border-color: var(--day);
+  color: #2b1220;
+  font-weight: 700;
+}
+
+.day-bar .day-info {
+  font-size: 12px;
+  color: var(--day);
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.year-bar .today-btn {
+  font-size: 12px;
+  color: var(--day);
+  border-color: var(--day);
+}
+
 /* ---- 流年總覽 ---- */
 .yearly-panel {
   background: var(--panel);
@@ -780,6 +825,14 @@ button.secondary { color: var(--accent); }
   font-weight: 700;
 }
 
+/* 流日命宮：粉色點線框（流日層只標這一枚，不標十二流日宮名） */
+.yearly-tag.daily-soul {
+  color: var(--day);
+  border-color: var(--day);
+  border-style: dotted;
+  font-weight: 700;
+}
+
 /* 流年四化：外框式色標，與本命四化（實心）區分 */
 .mutagen.flow {
   background: transparent;
@@ -801,6 +854,20 @@ button.secondary { color: var(--accent); }
 .mutagen.dec.mut-quan { color: var(--mut-quan); border-color: var(--mut-quan); }
 .mutagen.dec.mut-ke { color: var(--mut-ke); border-color: var(--mut-ke); }
 .mutagen.dec.mut-ji { color: var(--mut-ji); border-color: var(--mut-ji); }
+
+/* 流日四化：只留底部點線，最輕的一層（本命實心 → 大限虛框 → 流年流月實框 → 流日底線） */
+.mutagen.day {
+  background: transparent;
+  border: none;
+  border-bottom: 2px dotted;
+  border-radius: 0;
+  padding: 0 1px;
+}
+
+.mutagen.day.mut-lu { color: var(--mut-lu); border-color: var(--mut-lu); }
+.mutagen.day.mut-quan { color: var(--mut-quan); border-color: var(--mut-quan); }
+.mutagen.day.mut-ke { color: var(--mut-ke); border-color: var(--mut-ke); }
+.mutagen.day.mut-ji { color: var(--mut-ji); border-color: var(--mut-ji); }
 
 /* 宮位角落的流年宮名 */
 .yearly-tag {
@@ -854,6 +921,169 @@ button.secondary { color: var(--accent); }
   line-height: 1.75;
   margin: 0;
 }
+
+/* ---- 今日盤（流日）---- */
+.daily-block h4 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--day) !important;
+}
+
+.daily-solar {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+.daily-reading {
+  font-size: 13px;
+  line-height: 1.75;
+  margin: 0 0 8px;
+}
+
+.daily-reading b { color: var(--day); }
+
+/* ---- 解讀文庫 ---- */
+.library {
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.library-head h2 {
+  margin: 8px 0 4px;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--accent);
+}
+
+.library-sub {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.library-search {
+  font: inherit;
+  width: 100%;
+  max-width: 480px;
+  background: var(--cell);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 14px;
+}
+
+.lib-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lib-tabs button {
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.lib-tabs button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1408;
+  font-weight: 700;
+}
+
+.star-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.star-chips button {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.star-chips button.active {
+  background: var(--soul);
+  border-color: var(--soul);
+  color: #1a1408;
+  font-weight: 700;
+}
+
+.star-chip-overview {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--soul);
+  background: rgba(232, 201, 135, 0.08);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.lib-count {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.lib-empty {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.lib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 10px;
+}
+
+.lib-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.lib-card h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: var(--accent);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lib-card-tag {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--soul);
+  border: 1px solid var(--accent-dim);
+  border-radius: 999px;
+  padding: 1px 9px;
+  white-space: nowrap;
+}
+
+.lib-card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.75;
+  flex: 1;
+}
+
+.lib-card .lib-use {
+  align-self: flex-start;
+  margin-top: 8px;
+  color: var(--text-dim);
+}
+
+.lib-card .lib-use:hover { color: var(--accent); }
 
 /* ---- 小辭典 ---- */
 .glossary {
@@ -1111,6 +1341,32 @@ button.secondary { color: var(--accent); }
   }
 
   .month-bar .month-info { white-space: nowrap; }
+
+  /* 流日列：不換行、橫向捲動（同流月列） */
+  .day-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  .day-bar button {
+    flex-shrink: 0;
+    min-height: 38px;
+    min-width: 44px;
+    padding: 4px 8px;
+  }
+
+  .year-bar .today-btn { min-height: 38px; }
+
+  /* 文庫：卡片單欄、星曜 chip 好點按 */
+  .lib-grid { grid-template-columns: 1fr; }
+
+  .star-chips button,
+  .lib-tabs button { min-height: 38px; }
+
+  .lib-card .lib-use { min-height: 36px; }
 
   /* 已存命盤：chip 高度好點按 */
   .saved-chip .chip-load { padding: 8px 4px 8px 14px; }

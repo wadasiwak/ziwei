@@ -1,6 +1,7 @@
 import type FunctionalAstrolabe from 'iztro/lib/astro/FunctionalAstrolabe'
+import { findDailyReading } from '../content/dailyPalaces'
 import { findYearlyReading } from '../content/yearlyMutagens'
-import { LUNAR_MONTH_NAMES, type DecadalInfo, type MonthlyInfo, type YearlyInfo } from '../lib/chart'
+import { LUNAR_DAY_NAMES, LUNAR_MONTH_NAMES, lunarMonthDays, todayLunar, type DailyInfo, type DecadalInfo, type MonthlyInfo, type YearlyInfo } from '../lib/chart'
 import { useStore } from '../state'
 
 const MUTAGEN_ORDER = ['祿', '權', '科', '忌'] as const
@@ -51,8 +52,17 @@ export function DecadalBar({ decadals, yearly }: { decadals: DecadalInfo[]; year
 
 export function YearBar({ yearly, birthYear, decadal }: { yearly: YearlyInfo; birthYear: number; decadal: DecadalInfo | null }) {
   const setYear = useStore((s) => s.setYear)
+  const setMonth = useStore((s) => s.setMonth)
+  const setDay = useStore((s) => s.setDay)
   const thisYear = new Date().getFullYear()
   const inDecadal = decadal !== null && yearly.year >= decadal.yearRange[0] && yearly.year <= decadal.yearRange[1]
+  // 一鍵跳到今日的流年／流月／流日（以農曆年月日為準，春節前自動落在前一流年）
+  const goToday = () => {
+    const t = todayLunar()
+    setYear(t.year)
+    setMonth(t.month)
+    setDay(t.day)
+  }
   return (
     <div className="year-bar">
       <button onClick={() => setYear(yearly.year - 1)} disabled={yearly.year <= birthYear} aria-label="前一年">‹</button>
@@ -60,6 +70,7 @@ export function YearBar({ yearly, birthYear, decadal }: { yearly: YearlyInfo; bi
         {yearly.year} <b>{yearly.stem}{yearly.branch}年</b>・虛歲 {yearly.nominalAge}
       </span>
       <button onClick={() => setYear(yearly.year + 1)} aria-label="後一年">›</button>
+      <button className="today-btn" title="一鍵跳到今天的流年、流月、流日" onClick={goToday}>今天</button>
       {yearly.year !== thisYear && (
         <button className="back-to-now" onClick={() => setYear(thisYear)}>回今年</button>
       )}
@@ -95,14 +106,43 @@ export function MonthBar({ monthly }: { monthly: MonthlyInfo | null }) {
   )
 }
 
+/** 流日選擇列：選了流月才出現，列出當月農曆日（29 或 30 天），點選後盤面疊加流日層 */
+export function DayBar({ yearly, daily }: { yearly: YearlyInfo; daily: DailyInfo | null }) {
+  const selectedMonth = useStore((s) => s.selectedMonth)
+  const selectedDay = useStore((s) => s.selectedDay)
+  const setDay = useStore((s) => s.setDay)
+  if (selectedMonth === null) return null
+  const days = lunarMonthDays(yearly.year, selectedMonth)
+  const t = todayLunar()
+  const todayHere = !t.isLeap && t.year === yearly.year && t.month === selectedMonth ? t.day : null
+  return (
+    <div className="day-bar">
+      <span className="day-bar-label">流日</span>
+      {Array.from({ length: days }, (_, i) => i + 1).map((d) => (
+        <button
+          key={d}
+          className={`${selectedDay === d ? 'active' : ''} ${todayHere === d ? 'now' : ''}`}
+          title={todayHere === d ? '今天' : undefined}
+          onClick={() => setDay(selectedDay === d ? null : d)}
+        >
+          {LUNAR_DAY_NAMES[d - 1]}
+        </button>
+      ))}
+      {daily && <span className="day-info">{daily.stem}{daily.branch}日・國曆 {daily.solarDate}</span>}
+    </div>
+  )
+}
+
 export default function YearlyPanel({
   chart,
   yearly,
   monthly,
+  daily,
 }: {
   chart: FunctionalAstrolabe
   yearly: YearlyInfo
   monthly: MonthlyInfo | null
+  daily: DailyInfo | null
 }) {
   const soulPalace = chart.palaces[yearly.soulPalaceIndex]
   const decadalPalace = chart.palaces[yearly.decadalIndex]
@@ -180,6 +220,37 @@ export default function YearlyPanel({
           </ul>
         </div>
       )}
+      {daily && (() => {
+        const dailySoul = chart.palaces[daily.soulPalaceIndex]
+        const entry = findDailyReading(dailySoul.name)
+        return (
+          <div className="monthly-block daily-block">
+            <h4>
+              {LUNAR_DAY_NAMES[daily.day - 1]}（{daily.stem}{daily.branch}日）流日
+              <span className="daily-solar">國曆 {daily.solarDate}</span>
+            </h4>
+            <p className="yearly-soul-line">
+              今日盤：流日命宮在本命<strong>{dailySoul.name}</strong>（{dailySoul.earthlyBranch}宮）
+              {dailySoul.majorStars.length > 0
+                ? <>，坐 {dailySoul.majorStars.map((s) => s.name).join('、')}</>
+                : <>，空宮</>}
+            </p>
+            {entry && <p className="daily-reading"><b>{entry.title}</b>——{entry.text}</p>}
+            <ul className="monthly-mutagens">
+              {MUTAGEN_ORDER.map((m, i) => {
+                const starName = daily.mutagenStars[i]
+                const palace = palaceOfStar(chart, starName)
+                return (
+                  <li key={m}>
+                    <b className={`mutagen day ${MUTAGEN_CLASS[m]}`}>{m}</b>
+                    {starName}化{m} → 本命{palace ? palace.name : '（不在盤面）'}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )
+      })()}
       <p className="yearly-hint">看流年抓兩件事：流年命宮的星、化忌落點（今年的功課）。吉凶輕重仍需配合大限與本命結構。</p>
     </section>
   )
