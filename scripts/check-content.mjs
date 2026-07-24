@@ -106,6 +106,54 @@ if (dayEntries.length !== 12 || dayBad) {
 }
 console.log('OK: 12 daily palace entries covered')
 
+// 流月命宮落本命十二宮 12 則（每則 60–110 字，含本月主題＋注意事項）
+const moSrc = readFileSync(new URL('../src/content/monthlyPalaces.ts', import.meta.url), 'utf8')
+const moEntries = JSON.parse(moSrc.slice(moSrc.indexOf('= [') + 2, moSrc.lastIndexOf(']') + 1))
+const moSeen = new Set()
+let moBad = 0
+for (const e of moEntries) {
+  moSeen.add(e.palace)
+  if (!e.title || !e.text || e.text.length < 60 || e.text.length > 110) {
+    console.error(`bad monthly entry: ${e.palace}（${e.text?.length ?? 0} 字）`)
+    moBad++
+  }
+}
+for (const p of PALACES) {
+  if (!moSeen.has(p)) {
+    console.error(`missing monthly: ${p}`)
+    moBad++
+  }
+}
+if (moEntries.length !== 12 || moBad) {
+  console.error(`FAIL monthly: ${moEntries.length} entries, ${moBad} problems`)
+  process.exit(1)
+}
+console.log('OK: 12 monthly palace entries covered')
+
+// 化忌落本命十二宮注意事項 12 則（每則 30–80 字，流月流日共用）
+const jiSrc = readFileSync(new URL('../src/content/jiCautions.ts', import.meta.url), 'utf8')
+const jiEntries = JSON.parse(jiSrc.slice(jiSrc.indexOf('= [') + 2, jiSrc.lastIndexOf(']') + 1))
+const jiSeen = new Set()
+let jiBad = 0
+for (const e of jiEntries) {
+  jiSeen.add(e.palace)
+  if (!e.text || e.text.length < 30 || e.text.length > 80) {
+    console.error(`bad ji-caution entry: ${e.palace}（${e.text?.length ?? 0} 字）`)
+    jiBad++
+  }
+}
+for (const p of PALACES) {
+  if (!jiSeen.has(p)) {
+    console.error(`missing ji-caution: ${p}`)
+    jiBad++
+  }
+}
+if (jiEntries.length !== 12 || jiBad) {
+  console.error(`FAIL ji-caution: ${jiEntries.length} entries, ${jiBad} problems`)
+  process.exit(1)
+}
+console.log('OK: 12 ji-caution entries covered')
+
 // 合盤：14 主星「在關係中的樣子」各一則（每則 80–120 字）
 const loveSrc = readFileSync(new URL('../src/content/starInLove.ts', import.meta.url), 'utf8')
 const loveEntries = JSON.parse(loveSrc.slice(loveSrc.indexOf('= [') + 2, loveSrc.lastIndexOf(']') + 1))

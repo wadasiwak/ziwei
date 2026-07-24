@@ -1,5 +1,7 @@
 import type FunctionalAstrolabe from 'iztro/lib/astro/FunctionalAstrolabe'
 import { findDailyReading } from '../content/dailyPalaces'
+import { findJiCaution } from '../content/jiCautions'
+import { findMonthlyReading } from '../content/monthlyPalaces'
 import { findYearlyReading } from '../content/yearlyMutagens'
 import { LUNAR_DAY_NAMES, LUNAR_MONTH_NAMES, lunarMonthDays, todayLunar, type DailyInfo, type DecadalInfo, type MonthlyInfo, type YearlyInfo } from '../lib/chart'
 import { useStore } from '../state'
@@ -196,33 +198,48 @@ export default function YearlyPanel({
           )
         })}
       </div>
-      {monthly && (
-        <div className="monthly-block">
-          <h4>{LUNAR_MONTH_NAMES[monthly.month - 1]}（{monthly.stem}{monthly.branch}月）流月</h4>
-          <p className="yearly-soul-line">
-            流月命宮在本命<strong>{chart.palaces[monthly.soulPalaceIndex].name}</strong>
-            （{chart.palaces[monthly.soulPalaceIndex].earthlyBranch}宮）
-            {chart.palaces[monthly.soulPalaceIndex].majorStars.length > 0
-              ? <>，坐 {chart.palaces[monthly.soulPalaceIndex].majorStars.map((s) => s.name).join('、')}</>
-              : <>，空宮</>}
-          </p>
-          <ul className="monthly-mutagens">
-            {MUTAGEN_ORDER.map((m, i) => {
-              const starName = monthly.mutagenStars[i]
-              const palace = palaceOfStar(chart, starName)
-              return (
-                <li key={m}>
-                  <b className={`mutagen flow ${MUTAGEN_CLASS[m]}`}>{m}</b>
-                  {starName}化{m} → 本命{palace ? palace.name : '（不在盤面）'}
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      )}
+      {monthly && (() => {
+        const monthlySoul = chart.palaces[monthly.soulPalaceIndex]
+        const entry = findMonthlyReading(monthlySoul.name)
+        const jiStar = monthly.mutagenStars[3]
+        const jiPalace = palaceOfStar(chart, jiStar)
+        const ji = jiPalace ? findJiCaution(jiPalace.name) : undefined
+        return (
+          <div className="monthly-block">
+            <h4>{LUNAR_MONTH_NAMES[monthly.month - 1]}（{monthly.stem}{monthly.branch}月）流月</h4>
+            <p className="yearly-soul-line">
+              流月命宮在本命<strong>{monthlySoul.name}</strong>（{monthlySoul.earthlyBranch}宮）
+              {monthlySoul.majorStars.length > 0
+                ? <>，坐 {monthlySoul.majorStars.map((s) => s.name).join('、')}</>
+                : <>，空宮</>}
+            </p>
+            {entry && <p className="daily-reading"><b>{entry.title}</b>——{entry.text}</p>}
+            <ul className="monthly-mutagens">
+              {MUTAGEN_ORDER.map((m, i) => {
+                const starName = monthly.mutagenStars[i]
+                const palace = palaceOfStar(chart, starName)
+                return (
+                  <li key={m}>
+                    <b className={`mutagen flow ${MUTAGEN_CLASS[m]}`}>{m}</b>
+                    {starName}化{m} → 本命{palace ? palace.name : '（不在盤面）'}
+                  </li>
+                )
+              })}
+            </ul>
+            {ji && jiPalace && (
+              <p className="daily-reading ji-caution">
+                <b>本月功課</b>：{jiStar}化忌入本命{jiPalace.name}——{ji.text}
+              </p>
+            )}
+          </div>
+        )
+      })()}
       {daily && (() => {
         const dailySoul = chart.palaces[daily.soulPalaceIndex]
         const entry = findDailyReading(dailySoul.name)
+        const jiStar = daily.mutagenStars[3]
+        const jiPalace = palaceOfStar(chart, jiStar)
+        const ji = jiPalace ? findJiCaution(jiPalace.name) : undefined
         return (
           <div className="monthly-block daily-block">
             <h4>
@@ -248,6 +265,11 @@ export default function YearlyPanel({
                 )
               })}
             </ul>
+            {ji && jiPalace && (
+              <p className="daily-reading ji-caution">
+                <b>今日留意</b>：{jiStar}化忌入本命{jiPalace.name}——{ji.text}
+              </p>
+            )}
           </div>
         )
       })()}

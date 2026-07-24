@@ -945,6 +945,8 @@ button.secondary { color: var(--accent); }
 
 .daily-reading b { color: var(--day); }
 
+.ji-caution b { color: var(--mut-ji); }
+
 /* ---- 解讀文庫 ---- */
 .library {
   margin: 12px 0;
